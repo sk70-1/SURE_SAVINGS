@@ -6,19 +6,32 @@ import {
   AuthUser, AuthResponse, OnboardingPayload, CreateTransactionPayload
 } from "./types";
 
-function getApiBaseUrl(): string {
-  let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-  base = base.trim();
-  if (!base.startsWith("http://") && !base.startsWith("https://")) {
-    base = `https://${base}`;
+export function getApiBaseUrl(): string {
+  // If explicitly configured with non-localhost URL:
+  if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
+    let base = process.env.NEXT_PUBLIC_API_URL.trim();
+    if (!base.startsWith("http://") && !base.startsWith("https://")) {
+      base = `https://${base}`;
+    }
+    if (!base.endsWith("/api/v1")) {
+      base = `${base.replace(/\/+$/, "")}/api/v1`;
+    }
+    return base;
   }
-  if (!base.endsWith("/api/v1")) {
-    base = `${base.replace(/\/+$/, "")}/api/v1`;
-  }
-  return base;
-}
 
-const API_BASE = getApiBaseUrl();
+  // When running in the browser:
+  if (typeof window !== "undefined") {
+    // If running on Render or remote host:
+    if (window.location.hostname.includes("onrender.com")) {
+      return "https://sure-savings-api.onrender.com/api/v1";
+    }
+    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+      return `${window.location.origin}/api/v1`;
+    }
+  }
+
+  return "http://localhost:8000/api/v1";
+}
 
 let authToken: string | null = null;
 let currentDemoPersonaEmail = "arjun@example.com";
@@ -74,7 +87,8 @@ export function getActivePersonaEmail(): string {
 }
 
 export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  const url = `${API_BASE}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
+  const base = getApiBaseUrl();
+  const url = `${base}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers: Record<string, string> = {
     "Content-Type": "application/json",

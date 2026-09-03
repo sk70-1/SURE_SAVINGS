@@ -43,10 +43,10 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Configuration
+# CORS Configuration: allow all HTTP and HTTPS origins with credentials
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permits local Next.js dev server
+    allow_origin_regex=r"https?://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

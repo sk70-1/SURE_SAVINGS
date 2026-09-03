@@ -16,6 +16,20 @@ async def lifespan(app: FastAPI):
         try:
             Base.metadata.create_all(bind=engine)
             print("Database connected and schema initialized successfully.")
+
+            # Auto-seed initial demo personas if fresh database (0 demo users)
+            try:
+                db = SessionLocal()
+                demo_count = db.query(User).filter(User.is_demo == True).count()
+                db.close()
+                if demo_count == 0:
+                    print("Fresh database detected. Auto-seeding initial demo personas...")
+                    from app.db.seed import seed_database
+                    seed_database()
+                    print("Auto-seeding completed successfully!")
+            except Exception as se:
+                print(f"Auto-seed check notice: {se}")
+
             break
         except Exception as e:
             print(f"Database connection attempt {attempt + 1}/5: {e}")
@@ -69,3 +83,12 @@ def root_redirect():
         "docs": "/docs",
         "health": "/api/v1/health"
     }
+
+
+@app.get("/api/v1/seed", tags=["admin"])
+def trigger_seed():
+    """Endpoint to seed or re-seed initial personas without requiring a terminal."""
+    from app.db.seed import seed_database
+    seed_database()
+    return {"status": "success", "message": "Database seeded successfully!"}
+

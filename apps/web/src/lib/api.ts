@@ -6,7 +6,19 @@ import {
   AuthUser, AuthResponse, OnboardingPayload, CreateTransactionPayload
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+function getApiBaseUrl(): string {
+  let base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+  base = base.trim();
+  if (!base.startsWith("http://") && !base.startsWith("https://")) {
+    base = `https://${base}`;
+  }
+  if (!base.endsWith("/api/v1")) {
+    base = `${base.replace(/\/+$/, "")}/api/v1`;
+  }
+  return base;
+}
+
+const API_BASE = getApiBaseUrl();
 
 let authToken: string | null = null;
 let currentDemoPersonaEmail = "arjun@example.com";

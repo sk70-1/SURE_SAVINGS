@@ -5,7 +5,7 @@ services:
     runtime: python
     rootDir: apps/api
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     plan: free
     envVars:
       - key: ENVIRONMENT
@@ -37,7 +37,6 @@ services:
           type: web
           name: sure-savings-api
           property: host
-        transform: https://$VALUE/api/v1
 
 databases:
   # 3. Managed PostgreSQL Database

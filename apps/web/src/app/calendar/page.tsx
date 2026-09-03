@@ -14,7 +14,6 @@ import { MoneyAllocationModal } from "../../components/MoneyAllocationModal";
 import { AuthModal } from "../../components/AuthModal";
 import { AiDrawer } from "../../components/AiDrawer";
 import { HowItWorksModal } from "../../components/HowItWorksModal";
-import { CsvImportModal } from "../../components/import/CsvImportModal";
 
 import {
   CalendarMonthData,
@@ -40,7 +39,6 @@ import {
   Sliders,
   ShieldCheck,
   Lock,
-  UploadCloud,
 } from "lucide-react";
 
 export default function CalendarPage() {
@@ -64,7 +62,6 @@ export default function CalendarPage() {
   // Modals & Sub-actions State
   const [addObligationOpen, setAddObligationOpen] = useState(false);
   const [addTxModalOpen, setAddTxModalOpen] = useState(false);
-  const [importCsvModalOpen, setImportCsvModalOpen] = useState(false);
   const [bufferModalOpen, setBufferModalOpen] = useState(false);
   const [bufferStatus, setBufferStatus] = useState<BufferStatus | null>(null);
   const [allocationModalOpen, setAllocationModalOpen] = useState(false);
@@ -217,7 +214,6 @@ export default function CalendarPage() {
           showToast("You have been signed out.");
         }}
         onOpenAddTransaction={() => setAddTxModalOpen(true)}
-        onOpenImportCsv={() => setImportCsvModalOpen(true)}
       />
 
       {/* Toast Notification */}
@@ -345,15 +341,6 @@ export default function CalendarPage() {
               </button>
             </div>
 
-            {/* Action Buttons */}
-            <button
-              onClick={() => setImportCsvModalOpen(true)}
-              className="px-3.5 py-1.5 text-xs font-semibold text-[#4b5563] hover:text-[#111827] bg-white hover:bg-[#f3f4f6] border border-[#eae8e3] rounded-xl flex items-center space-x-1.5 shadow-2xs transition-all"
-              title="Import Statement CSV"
-            >
-              <UploadCloud className="w-3.5 h-3.5 text-[#059669]" />
-              <span className="hidden sm:inline">Import CSV</span>
-            </button>
 
             <button
               onClick={() => setAddObligationOpen(true)}
@@ -411,7 +398,6 @@ export default function CalendarPage() {
               <CalendarEmptyState
                 onOpenAddObligation={() => setAddObligationOpen(true)}
                 onOpenAddTransaction={() => setAddTxModalOpen(true)}
-                onOpenImportCsv={() => setImportCsvModalOpen(true)}
                 onActivateDemoMode={handleActivateDemoMode}
               />
             ) : (
@@ -472,16 +458,6 @@ export default function CalendarPage() {
         }}
       />
 
-      {/* CSV Import Statement Modal */}
-      <CsvImportModal
-        isOpen={importCsvModalOpen}
-        onClose={() => setImportCsvModalOpen(false)}
-        onImportComplete={async () => {
-          showToast("Statement transactions imported successfully!");
-          await loadMonthData();
-        }}
-        currency={monthData?.currency || "INR"}
-      />
 
       {/* Buffer Simulation Modal */}
       <BufferModal

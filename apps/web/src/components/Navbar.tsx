@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Sparkles, HelpCircle, Sliders, ShieldCheck,
   User as UserIcon, LogOut, PlusCircle,
-  CalendarDays, LayoutDashboard, UploadCloud
+  CalendarDays, LayoutDashboard
 } from "lucide-react";
 import { AuthUser } from "../lib/types";
 
@@ -21,7 +21,6 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenAddTransaction: () => void;
-  onOpenImportCsv?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -35,7 +34,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onOpenAddTransaction,
-  onOpenImportCsv,
 }) => {
   const pathname = usePathname();
   const isDashboard = pathname === "/";
@@ -99,18 +97,6 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2.5">
-          {/* Import CSV Button */}
-          {onOpenImportCsv && (
-            <button
-              onClick={currentUser ? onOpenImportCsv : onOpenAuth}
-              className="px-2.5 py-1.5 text-xs font-semibold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center space-x-1.5 transition-all shadow-xs"
-              title="Import Statement CSV (Bank / UPI / Gig Payouts)"
-            >
-              <UploadCloud className="w-3.5 h-3.5 text-[#059669]" />
-              <span className="hidden sm:inline">Import CSV</span>
-            </button>
-          )}
-
           {/* Record Transaction Button */}
           <button
             onClick={currentUser ? onOpenAddTransaction : onOpenAuth}

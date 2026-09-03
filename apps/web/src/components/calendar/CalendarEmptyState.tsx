@@ -6,14 +6,12 @@ import { CalendarDays, PlusCircle, Sparkles, ArrowRight, ShieldCheck, UploadClou
 interface CalendarEmptyStateProps {
   onOpenAddObligation: () => void;
   onOpenAddTransaction: () => void;
-  onOpenImportCsv?: () => void;
   onActivateDemoMode?: () => void;
 }
 
 export const CalendarEmptyState: React.FC<CalendarEmptyStateProps> = ({
   onOpenAddObligation,
   onOpenAddTransaction,
-  onOpenImportCsv,
   onActivateDemoMode,
 }) => {
   return (
@@ -69,15 +67,6 @@ export const CalendarEmptyState: React.FC<CalendarEmptyStateProps> = ({
           <span>Add Scheduled Bill</span>
         </button>
 
-        {onOpenImportCsv && (
-          <button
-            onClick={onOpenImportCsv}
-            className="w-full sm:w-auto px-4 py-2.5 bg-white hover:bg-[#f3f4f6] text-[#059669] text-xs font-bold rounded-xl border border-[#a7f3d0] flex items-center justify-center space-x-1.5 shadow-2xs transition-all"
-          >
-            <UploadCloud className="w-4 h-4 text-[#059669]" />
-            <span>Import Statement CSV</span>
-          </button>
-        )}
 
         <button
           onClick={onOpenAddTransaction}

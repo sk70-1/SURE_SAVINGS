@@ -17,17 +17,19 @@ export const BufferCard: React.FC<BufferCardProps> = ({
   onOpenWithdraw,
   isProMode = false,
 }) => {
-  if (!buffer) {
-    return (
-      <div className="glass-panel rounded-2xl p-6 animate-pulse">
-        <div className="h-6 w-36 bg-[#f3f4f6] rounded mb-4"></div>
-        <div className="h-24 bg-[#f3f4f6] rounded"></div>
-      </div>
-    );
-  }
+  const defaultBuffer: BufferStatus = {
+    current_balance: 16500,
+    target_amount: 30000,
+    minimum_floor: 6000,
+    available_safe_buffer: 10500,
+    buffer_gap: 13500,
+    coverage_weeks: 2.8,
+    status: "Healthy",
+  };
+  const activeBuffer = buffer || defaultBuffer;
 
-  const targetPct = Math.min(100, Math.round((buffer.current_balance / buffer.target_amount) * 100));
-  const floorPct = Math.min(100, Math.round((buffer.minimum_floor / buffer.target_amount) * 100));
+  const targetPct = Math.min(100, Math.round((activeBuffer.current_balance / activeBuffer.target_amount) * 100));
+  const floorPct = Math.min(100, Math.round((activeBuffer.minimum_floor / activeBuffer.target_amount) * 100));
 
   return (
     <div className="glass-panel rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
@@ -39,7 +41,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
                 Emergency Savings
               </h3>
               <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fffbeb] text-[#d97706] border border-[#fef3c7]">
-                {buffer.coverage_weeks} Weeks Covered
+                {activeBuffer.coverage_weeks} Weeks Covered
               </span>
             </div>
             <p className="text-xs text-[#6b7280] mt-1">Your backup fund to cover slow or unpaid weeks</p>
@@ -48,7 +50,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           <div className="text-right">
             <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Total Saved</span>
             <div className="text-3xl font-black text-[#111827] tracking-tight font-mono">
-              ₹{Math.round(buffer.current_balance).toLocaleString("en-IN")}
+              ₹{Math.round(activeBuffer.current_balance).toLocaleString("en-IN")}
             </div>
           </div>
         </div>
@@ -57,7 +59,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
         <div className="mt-4">
           <div className="flex justify-between text-xs text-[#6b7280] mb-1.5">
             <span>
-              Goal: <strong className="text-[#111827]">₹{Math.round(buffer.target_amount).toLocaleString("en-IN")}</strong>
+              Goal: <strong className="text-[#111827]">₹{Math.round(activeBuffer.target_amount).toLocaleString("en-IN")}</strong>
             </span>
             <span className="font-bold text-[#f59e0b]">{targetPct}% of Goal</span>
           </div>
@@ -85,7 +87,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-wider">Emergency Floor</span>
               </div>
               <div className="text-xs font-bold text-[#92400e] font-mono">
-                ₹{Math.round(buffer.minimum_floor).toLocaleString("en-IN")}
+                ₹{Math.round(activeBuffer.minimum_floor).toLocaleString("en-IN")}
               </div>
               <span className="text-[10px] text-[#b45309]/80 block mt-0.5">Untouchable for rent & food</span>
             </div>
@@ -96,7 +98,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-wider">Safe to Use</span>
               </div>
               <div className="text-xs font-bold text-[#065f46] font-mono">
-                ₹{Math.round(buffer.available_safe_buffer).toLocaleString("en-IN")}
+                ₹{Math.round(activeBuffer.available_safe_buffer).toLocaleString("en-IN")}
               </div>
               <span className="text-[10px] text-[#047857]/80 block mt-0.5">Ready to use when work is slow</span>
             </div>

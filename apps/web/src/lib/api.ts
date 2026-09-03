@@ -21,11 +21,13 @@ export function getApiBaseUrl(): string {
 
   // When running in the browser:
   if (typeof window !== "undefined") {
-    // If running on Render or remote host:
-    if (window.location.hostname.includes("onrender.com")) {
-      return "https://sure-savings-api.onrender.com/api/v1";
+    const host = window.location.hostname;
+    // If running on Render, dynamically match the exact backend hostname (e.g. sure-savings-web-pss8 -> sure-savings-api-pss8)
+    if (host.includes("onrender.com")) {
+      const apiHost = host.replace("sure-savings-web", "sure-savings-api");
+      return `https://${apiHost}/api/v1`;
     }
-    if (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+    if (host !== "localhost" && host !== "127.0.0.1") {
       return `${window.location.origin}/api/v1`;
     }
   }

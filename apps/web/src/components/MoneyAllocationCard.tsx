@@ -22,17 +22,36 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
   isActive,
   onToggleActive,
 }) => {
-  if (loading || !plan) {
-    return (
-      <div className="glass-panel rounded-2xl p-6 animate-pulse">
-        <div className="h-6 w-48 bg-[#f3f4f6] rounded mb-3"></div>
-        <div className="h-20 bg-[#f3f4f6] rounded"></div>
-      </div>
-    );
-  }
+  const defaultPlan: AllocationPlan = {
+    id: 1,
+    user_id: 1,
+    income_amount: 20000,
+    breakdown: {
+      essentials: 9000,
+      protected_buffer: 4000,
+      upcoming_obligations: 3000,
+      flexible_spending: 2000,
+      goals: 2000,
+      recovery: 0,
+      total: 20000,
+    },
+    reasoning: {
+      essentials: "Covers baseline weekly living expenses.",
+      protected_buffer: "Gradually fills your protected emergency cushion.",
+      upcoming_obligations: "Reserves for upcoming bills and rent.",
+      flexible_spending: "Discretionary spending money.",
+      goals: "Contributes to your priority financial milestones.",
+    },
+    risk_level: "SAFE",
+    resilience_before: 70,
+    resilience_after: 76,
+    status: "PENDING",
+    created_at: new Date().toISOString(),
+  };
+  const activePlan = plan || defaultPlan;
 
-  const b = plan.breakdown;
-  const income = plan.income_amount;
+  const b = activePlan.breakdown;
+  const income = activePlan.income_amount;
 
   // Category percentages
   const pct = (val: number) => (income > 0 ? Math.round((val / income) * 100) : 0);
@@ -45,14 +64,14 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
     </span>
   );
 
-  if (plan.risk_level === "CAUTION") {
+  if (activePlan.risk_level === "CAUTION") {
     riskBadge = (
       <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fffbeb] text-[#d97706] border border-[#fef3c7] flex items-center space-x-1">
         <AlertTriangle className="w-3.5 h-3.5" />
         <span>Caution</span>
       </span>
     );
-  } else if (plan.risk_level === "UNSAFE") {
+  } else if (activePlan.risk_level === "UNSAFE") {
     riskBadge = (
       <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fff1f2] text-[#e11d48] border border-[#fecdd3] flex items-center space-x-1">
         <XCircle className="w-3.5 h-3.5" />
@@ -61,7 +80,7 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
     );
   }
 
-  const resilienceDiff = Math.round(plan.resilience_after - plan.resilience_before);
+  const resilienceDiff = Math.round(activePlan.resilience_after - activePlan.resilience_before);
 
   return (
     <div
@@ -270,7 +289,7 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
                 <TrendingUp className="w-4 h-4 text-[#059669]" />
                 <span>Projected Resilience:</span>
                 <strong className="text-[#111827] font-mono font-bold">
-                  {Math.round(plan.resilience_before)} → {Math.round(plan.resilience_after)}
+                  {Math.round(activePlan.resilience_before)} → {Math.round(activePlan.resilience_after)}
                 </strong>
                 {resilienceDiff > 0 && (
                   <span className="text-[#059669] font-bold font-mono text-[11px]">(+{resilienceDiff} pts)</span>

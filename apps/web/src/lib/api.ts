@@ -2,7 +2,7 @@ import {
   UserProfile, PersonaOption, IncomeAnalytics, IncomeForecast,
   BufferStatus, BufferTransaction, ResilienceScore,
   Recommendation, Transaction, NotificationItem, AiExplanationResponse,
-  AllocationPlan, AllocationSimulationResult, FinancialGoal,
+  AllocationPlan, AllocationSimulationResult, AllocationSimulateRequest, AllocationApproveRequest, FinancialGoal,
   AuthUser, AuthResponse, OnboardingPayload, CreateTransactionPayload,
   ScheduledObligation, CreateObligationPayload, UpdateObligationPayload,
   CalendarMonthData, CalendarDayDetail,
@@ -118,8 +118,29 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
   });
 
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(errorData.detail || `Request failed with status ${res.status}`);
+    let errorMessage = `Request failed with status ${res.status}`;
+    try {
+      const errorData = await res.json();
+      if (Array.isArray(errorData.detail)) {
+        errorMessage = errorData.detail
+          .map((err: any) => {
+            const field = Array.isArray(err.loc)
+              ? err.loc.filter((p: any) => p !== "body").join(".")
+              : (err.loc || "");
+            return field ? `${field}: ${err.msg}` : err.msg;
+          })
+          .join("; ");
+      } else if (typeof errorData.detail === "string") {
+        errorMessage = errorData.detail;
+      } else if (errorData.message) {
+        errorMessage = errorData.message;
+      } else if (errorData.detail) {
+        errorMessage = JSON.stringify(errorData.detail);
+      }
+    } catch {
+      errorMessage = res.statusText || errorMessage;
+    }
+    throw new Error(errorMessage);
   }
 
   return res.json();
@@ -195,12 +216,29 @@ export const api = {
   // --- Money Allocation Autopilot ---
   getCurrentAllocationPlan: (incomeOverride?: number) =>
     fetchApi<AllocationPlan>(`/allocation/current${incomeOverride ? `?income_amount=${incomeOverride}` : ""}`),
-  simulateAllocation: (proposedOrIncome: any, values?: any) => {
-    let payload = proposedOrIncome;
-    if (typeof proposedOrIncome === "number" && values) {
+  simulateAllocation: (
+    incomeOrPayload: number | AllocationSimulateRequest,
+    proposedBreakdown?: Record<string, number>
+  ) => {
+    let payload: AllocationSimulateRequest;
+    if (typeof incomeOrPayload === "number") {
       payload = {
-        income_amount: proposedOrIncome,
-        ...values,
+        income_received: incomeOrPayload,
+        proposed_breakdown: proposedBreakdown || {},
+      };
+    } else if (
+      incomeOrPayload &&
+      typeof incomeOrPayload === "object" &&
+      "proposed_breakdown" in incomeOrPayload
+    ) {
+      payload = incomeOrPayload as AllocationSimulateRequest;
+    } else {
+      const raw = incomeOrPayload as any;
+      const income = raw?.income_received ?? raw?.income_amount ?? 0;
+      const { income_received, income_amount, ...rest } = raw || {};
+      payload = {
+        income_received: income,
+        proposed_breakdown: raw?.proposed_breakdown ?? rest,
       };
     }
     return fetchApi<AllocationSimulationResult>("/allocation/simulate", {
@@ -208,19 +246,33 @@ export const api = {
       body: JSON.stringify(payload),
     });
   },
-  approveAllocation: (planId: number, proposed?: any) =>
-    fetchApi<{
-      message: string;
-      plan_id: number;
+  approveAllocation: (
+    planId: number,
+    customBreakdownOrPayload?: Record<string, number> | AllocationApproveRequest
+  ) => {
+    let payload: AllocationApproveRequest = {};
+    if (customBreakdownOrPayload) {
+      if ("custom_breakdown" in customBreakdownOrPayload) {
+        payload = customBreakdownOrPayload as AllocationApproveRequest;
+      } else {
+        payload = { custom_breakdown: customBreakdownOrPayload as Record<string, number> };
+      }
+    }
+    return fetchApi<{
+      success: boolean;
       status: string;
-      buffer_updated: number;
-      resilience_score: number;
+      plan_id: number;
+      message: string;
+      buffer_updated?: number;
+      resilience_score?: number;
+      audit_log_id?: number;
     }>(`/allocation/${planId}/approve`, {
       method: "POST",
-      body: JSON.stringify(proposed || {}),
-    }),
+      body: JSON.stringify(payload),
+    });
+  },
   dismissAllocation: (planId: number) =>
-    fetchApi<{ message: string; plan_id: number; status: string }>(`/allocation/${planId}/dismiss`, {
+    fetchApi<{ success: boolean; message: string; plan_id: number; status: string }>(`/allocation/${planId}/dismiss`, {
       method: "POST",
     }),
   getAllocationHistory: () => fetchApi<AllocationPlan[]>("/allocation/history"),

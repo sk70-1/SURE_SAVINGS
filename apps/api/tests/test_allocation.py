@@ -249,6 +249,45 @@ def test_approve_allocation_plan_flow():
     assert any(h["id"] == plan_id and h["status"] == "APPROVED" for h in history)
 
 
+def test_approve_allocation_plan_with_custom_breakdown():
+    """Verify approving plan with custom_breakdown saves the custom numbers."""
+    plan_resp = client.get(
+        "/api/v1/allocation/current?income_amount=15000",
+        headers={"X-User-Email": "arjun@example.com"}
+    )
+    assert plan_resp.status_code == 200
+    plan = plan_resp.json()
+    plan_id = plan["id"]
+
+    custom_breakdown = {
+        "essentials": 6000.0,
+        "protected_buffer": 3000.0,
+        "upcoming_obligations": 1500.0,
+        "recovery": 0.0,
+        "goals": 2000.0,
+        "flexible_spending": 2500.0
+    }
+
+    approve_resp = client.post(
+        f"/api/v1/allocation/{plan_id}/approve",
+        headers={"X-User-Email": "arjun@example.com"},
+        json={"custom_breakdown": custom_breakdown}
+    )
+    assert approve_resp.status_code == 200
+    assert approve_resp.json()["success"] is True
+
+    # Check history to confirm custom breakdown was preserved
+    hist_resp = client.get(
+        "/api/v1/allocation/history",
+        headers={"X-User-Email": "arjun@example.com"}
+    )
+    assert hist_resp.status_code == 200
+    approved_plan = next(h for h in hist_resp.json() if h["id"] == plan_id)
+    assert approved_plan["breakdown"]["essentials"] == 6000.0
+    assert approved_plan["breakdown"]["protected_buffer"] == 3000.0
+    assert approved_plan["breakdown"]["flexible_spending"] == 2500.0
+
+
 def test_dismiss_allocation_plan():
     """POST /api/v1/allocation/{id}/dismiss marks plan as dismissed."""
     # Create a fresh plan

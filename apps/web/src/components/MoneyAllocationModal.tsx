@@ -40,10 +40,13 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
   const runSimulation = async (values: Record<string, number>, incomeAmt: number) => {
     setSimulating(true);
     try {
-      const res = await api.simulateAllocation(incomeAmt, values);
+      const res = await api.simulateAllocation({
+        income_received: incomeAmt,
+        proposed_breakdown: values,
+      });
       setSimResult(res);
     } catch (err: any) {
-      console.error("Simulation error:", err);
+      console.error("Simulation error:", err.message || err);
     } finally {
       setSimulating(false);
     }
@@ -104,7 +107,9 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
 
     setApproving(true);
     try {
-      await api.approveAllocation(plan.id, breakdown);
+      await api.approveAllocation(plan.id, {
+        custom_breakdown: breakdown,
+      });
       showToast("✅ Autopilot Allocation successfully approved & simulated!");
       await onApproved();
       onClose();

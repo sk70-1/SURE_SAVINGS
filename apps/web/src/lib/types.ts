@@ -150,6 +150,15 @@ export interface AllocationSimulationResult {
   breakdown: Record<string, number>;
 }
 
+export interface AllocationSimulateRequest {
+  income_received: number;
+  proposed_breakdown: Record<string, number>;
+}
+
+export interface AllocationApproveRequest {
+  custom_breakdown?: Record<string, number>;
+}
+
 export interface FinancialGoal {
   id: number;
   title: string;

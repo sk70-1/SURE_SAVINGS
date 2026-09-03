@@ -3,7 +3,10 @@ import {
   BufferStatus, BufferTransaction, ResilienceScore,
   Recommendation, Transaction, NotificationItem, AiExplanationResponse,
   AllocationPlan, AllocationSimulationResult, FinancialGoal,
-  AuthUser, AuthResponse, OnboardingPayload, CreateTransactionPayload
+  AuthUser, AuthResponse, OnboardingPayload, CreateTransactionPayload,
+  ScheduledObligation, CreateObligationPayload, UpdateObligationPayload,
+  CalendarMonthData, CalendarDayDetail,
+  CsvPreviewResponse, CsvCommitItem, CsvCommitResponse, CategoryMetadata
 } from "./types";
 
 export function getApiBaseUrl(): string {
@@ -96,7 +99,7 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
   const url = `${base}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
   
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(options.body instanceof FormData ? {} : { "Content-Type": "application/json" }),
     ...(options.headers as Record<string, string> || {}),
   };
 
@@ -235,4 +238,53 @@ export const api = {
       body: JSON.stringify({ message }),
     }),
   getNotifications: () => fetchApi<NotificationItem[]>("/notifications"),
+
+  // --- Cash Flow Calendar & Scheduled Obligations ---
+  getCalendarMonth: (year?: number, month?: number) => {
+    const params = new URLSearchParams();
+    if (year) params.append("year", year.toString());
+    if (month) params.append("month", month.toString());
+    const q = params.toString() ? `?${params.toString()}` : "";
+    return fetchApi<CalendarMonthData>(`/calendar/month${q}`);
+  },
+
+  getCalendarDay: (date: string) =>
+    fetchApi<CalendarDayDetail>(`/calendar/day?date=${date}`),
+
+  getObligations: () => fetchApi<ScheduledObligation[]>("/obligations"),
+
+  createObligation: (data: CreateObligationPayload) =>
+    fetchApi<ScheduledObligation>("/obligations", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+
+  updateObligation: (id: number, data: UpdateObligationPayload) =>
+    fetchApi<ScheduledObligation>(`/obligations/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+
+  deleteObligation: (id: number) =>
+    fetchApi<{ message: string }>(`/obligations/${id}`, {
+      method: "DELETE",
+    }),
+
+  // --- CSV Statement Import & Auto-Categorization ---
+  getCategories: () => fetchApi<CategoryMetadata[]>("/transactions/categories"),
+
+  previewCsv: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return fetchApi<CsvPreviewResponse>("/transactions/import/preview", {
+      method: "POST",
+      body: formData,
+    });
+  },
+
+  confirmCsv: (items: CsvCommitItem[]) =>
+    fetchApi<CsvCommitResponse>("/transactions/import/confirm", {
+      method: "POST",
+      body: JSON.stringify({ items }),
+    }),
 };

@@ -21,7 +21,7 @@ from app.core.security import hash_password
 from app.models.models import (
     User, FinancialProfile, Transaction, BufferAccount,
     BufferTransaction, ResilienceScore, Recommendation, Notification, AuditLog,
-    MoneyAllocationPlan, FinancialGoal
+    MoneyAllocationPlan, FinancialGoal, ScheduledObligation
 )
 from app.engine.financial_engine import FinancialEngine
 from app.engine.forecast_engine import ForecastEngine
@@ -251,6 +251,96 @@ def seed_database():
                         priority=1
                     )
                 db.add(goal)
+
+        # Seed sample scheduled obligations for demo users
+        for u in all_users:
+            if not u.is_demo:
+                continue
+            existing_obl_count = db.query(ScheduledObligation).filter(ScheduledObligation.user_id == u.id).count()
+            if existing_obl_count == 0:
+                if "arjun" in u.email:
+                    # Arjun (Moderately Volatile Freelance UX / Gig Worker) - matches calendar reference
+                    obls = [
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Bike EV EMI Mandate",
+                            amount=6500.0,
+                            category="loan",
+                            due_day=10,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=3
+                        ),
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="EV Battery Swapping Plan",
+                            amount=1200.0,
+                            category="transport",
+                            due_day=2,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=2
+                        ),
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Broadband & Studio Utilities",
+                            amount=1600.0,
+                            category="utilities",
+                            due_day=15,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=3
+                        ),
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Co-working & Studio Rent Share",
+                            amount=2800.0,
+                            category="rent",
+                            due_day=6,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=5
+                        ),
+                    ]
+                    db.add_all(obls)
+                elif "vikram" in u.email:
+                    obls = [
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Vehicle Loan EMI",
+                            amount=4800.0,
+                            category="loan",
+                            due_day=5,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=3
+                        ),
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Vehicle Commercial Insurance",
+                            amount=1500.0,
+                            category="insurance",
+                            due_day=20,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=4
+                        ),
+                    ]
+                    db.add_all(obls)
+                else:
+                    obls = [
+                        ScheduledObligation(
+                            user_id=u.id,
+                            title="Essential Living Expenses Mandate",
+                            amount=3000.0,
+                            category="bills",
+                            due_day=7,
+                            frequency="monthly",
+                            is_essential=True,
+                            reminder_days_before=2
+                        ),
+                    ]
+                    db.add_all(obls)
 
         db.commit()
         print("Database seeding completed successfully!")

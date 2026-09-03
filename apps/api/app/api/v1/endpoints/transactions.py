@@ -1,12 +1,23 @@
 from typing import List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File, status
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
 from app.models.models import User, Transaction, AuditLog
-from app.schemas.schemas import TransactionCreate, TransactionOut
+from app.schemas.schemas import (
+    TransactionCreate, TransactionOut,
+    CsvPreviewResponse, CsvCommitRequest, CsvCommitResponse, CategoryMetadataOut
+)
+from app.services.csv_parser_service import CsvParserService
+from app.engine.categorization_engine import CategorizationEngine
 
 router = APIRouter()
+
+
+@router.get("/categories", response_model=List[CategoryMetadataOut])
+def get_categories():
+    """Returns available financial transaction categories with metadata."""
+    return CategorizationEngine.CATEGORY_DEFINITIONS
 
 
 @router.get("", response_model=List[TransactionOut])
@@ -84,6 +95,90 @@ def delete_transaction(
     return {"message": "Transaction deleted successfully."}
 
 
+@router.post("/import/preview", response_model=CsvPreviewResponse)
+async def preview_transactions_csv(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Parses and auto-categorizes uploaded bank/UPI/gig statement CSV.
+    Detects potential duplicates and returns preview items for user inspection.
+    """
+    content = await file.read()
+    if not content:
+        raise HTTPException(status_code=400, detail="Empty file uploaded.")
+
+    try:
+        preview_data = CsvParserService.parse_and_preview(
+            file_bytes=content,
+            current_user=current_user,
+            db=db
+        )
+        return preview_data
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse CSV statement: {str(e)}")
+
+
+@router.post("/import/confirm", response_model=CsvCommitResponse)
+def confirm_transactions_csv(
+    commit_req: CsvCommitRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Commits approved transactions into the database after user review.
+    """
+    if not commit_req.items:
+        raise HTTPException(status_code=400, detail="No transactions selected for import.")
+
+    total_inflow = 0.0
+    total_outflow = 0.0
+    imported_count = 0
+
+    for item in commit_req.items:
+        parsed_dt = CsvParserService.parse_date(item.date)
+        if not parsed_dt:
+            parsed_dt = datetime.now(timezone.utc)
+
+        amt = float(item.amount)
+        ttype = item.transaction_type.upper()
+        if ttype == "INCOME":
+            total_inflow += amt
+        else:
+            total_outflow += amt
+
+        tx = Transaction(
+            user_id=current_user.id,
+            date=parsed_dt,
+            amount=amt,
+            description=item.description.strip(),
+            category=item.category.lower(),
+            transaction_type=ttype,
+            is_essential=item.is_essential,
+            source=item.source or "csv_import"
+        )
+        db.add(tx)
+        imported_count += 1
+
+    audit = AuditLog(
+        user_id=current_user.id,
+        action="CSV_CONFIRM_IMPORT",
+        details=f"Imported {imported_count} transactions (+₹{total_inflow:,.2f} inflows, -₹{total_outflow:,.2f} outflows)"
+    )
+    db.add(audit)
+    db.commit()
+
+    return {
+        "imported_count": imported_count,
+        "total_inflow": round(total_inflow, 2),
+        "total_outflow": round(total_outflow, 2),
+        "message": f"Successfully imported {imported_count} transactions."
+    }
+
+
 @router.post("/import")
 async def import_transactions_csv(
     file: UploadFile = File(...),
@@ -91,67 +186,38 @@ async def import_transactions_csv(
     db: Session = Depends(get_db)
 ):
     """
-    Parses CSV transaction file with duplicate prevention and user isolation.
-    Expected columns: date, amount, description, category, transaction_type, is_essential
+    Direct legacy import endpoint with intelligent multi-format fallback.
     """
     content = await file.read()
-    lines = content.decode("utf-8-sig").splitlines()
-    if not lines:
+    if not content:
         raise HTTPException(status_code=400, detail="Empty CSV file provided.")
 
-    imported_count = 0
-    duplicate_count = 0
-    header = [h.strip().lower() for h in lines[0].split(",")]
-
-    for line in lines[1:]:
-        if not line.strip():
-            continue
-        parts = [p.strip() for p in line.split(",")]
-        row = dict(zip(header, parts))
-        try:
-            date_val = datetime.fromisoformat(row.get("date", datetime.utcnow().isoformat()))
-            amt = float(row.get("amount", 0.0))
-            desc = row.get("description", "Imported statement item")
-            cat = row.get("category", "other").lower()
-            ttype = row.get("transaction_type", "EXPENSE").upper()
-            is_ess = row.get("is_essential", "false").lower() in ["true", "1", "yes"]
-
-            # Duplicate prevention check
-            existing = db.query(Transaction).filter(
-                Transaction.user_id == current_user.id,
-                Transaction.date == date_val,
-                Transaction.amount == amt,
-                Transaction.description == desc
-            ).first()
-
-            if existing:
-                duplicate_count += 1
+    try:
+        preview = CsvParserService.parse_and_preview(content, current_user, db)
+        # Commit non-duplicate items directly
+        imported_count = 0
+        for item in preview["items"]:
+            if item["is_duplicate"]:
                 continue
-
+            parsed_dt = CsvParserService.parse_date(item["date"]) or datetime.now(timezone.utc)
             tx = Transaction(
                 user_id=current_user.id,
-                date=date_val,
-                amount=amt,
-                description=desc,
-                category=cat,
-                transaction_type=ttype,
-                is_essential=is_ess,
+                date=parsed_dt,
+                amount=item["amount"],
+                description=item["clean_description"] or item["description"],
+                category=item["category"],
+                transaction_type=item["transaction_type"],
+                is_essential=item["is_essential"],
                 source="csv_import"
             )
             db.add(tx)
             imported_count += 1
-        except Exception:
-            continue
 
-    audit = AuditLog(
-        user_id=current_user.id,
-        action="CSV_IMPORT",
-        details=f"Imported {imported_count} transactions (skipped {duplicate_count} duplicates)"
-    )
-    db.add(audit)
-    db.commit()
-    return {
-        "message": f"Successfully ingested {imported_count} transactions.",
-        "imported": imported_count,
-        "duplicates_skipped": duplicate_count
-    }
+        db.commit()
+        return {
+            "message": f"Successfully ingested {imported_count} transactions.",
+            "imported": imported_count,
+            "duplicates_skipped": preview["duplicate_rows"]
+        }
+    except Exception as e:
+        raise HTTPException(status_code=422, detail=f"CSV import error: {str(e)}")

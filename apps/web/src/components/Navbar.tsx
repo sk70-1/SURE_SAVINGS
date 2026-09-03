@@ -1,9 +1,12 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sparkles, HelpCircle, Sliders, ShieldCheck,
-  User as UserIcon, LogOut, PlusCircle
+  User as UserIcon, LogOut, PlusCircle,
+  CalendarDays, LayoutDashboard, UploadCloud
 } from "lucide-react";
 import { AuthUser } from "../lib/types";
 
@@ -18,6 +21,7 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenAddTransaction: () => void;
+  onOpenImportCsv?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -31,33 +35,82 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onOpenAddTransaction,
+  onOpenImportCsv,
 }) => {
+  const pathname = usePathname();
+  const isDashboard = pathname === "/";
+  const isCalendar = pathname === "/calendar";
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#eae8e3] bg-white/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.25rem] py-2.5 flex items-center justify-between gap-4">
         
         {/* Sure-Savings Brand */}
-        <div className="flex items-center gap-3.5 shrink-0">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff5b45] to-[#f59e0b] flex items-center justify-center shadow-md shadow-[#ff5b45]/25 shrink-0">
-            <ShieldCheck className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex flex-col justify-center text-left">
-            <div className="flex items-center gap-2 leading-none">
-              <span className="text-[17px] font-black tracking-tight text-[#111827] font-sans">
-                Sure-<span className="text-[#ff5b45]">Savings</span>
-              </span>
-              <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4]">
-                Smart Cushion
-              </span>
+        <div className="flex items-center gap-4 shrink-0">
+          <Link href="/" className="flex items-center gap-3.5 group">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff5b45] to-[#f59e0b] flex items-center justify-center shadow-md shadow-[#ff5b45]/25 shrink-0 group-hover:scale-105 transition-transform">
+              <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <p className="text-[11px] text-[#6b7280] font-medium leading-tight mt-1">
-              Automated Money Cushion for Freelancers & Gig Workers
-            </p>
-          </div>
+            <div className="flex flex-col justify-center text-left">
+              <div className="flex items-center gap-2 leading-none">
+                <span className="text-[17px] font-black tracking-tight text-[#111827] font-sans">
+                  Sure-<span className="text-[#ff5b45]">Savings</span>
+                </span>
+                <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4]">
+                  Smart Cushion
+                </span>
+              </div>
+              <p className="text-[11px] text-[#6b7280] font-medium leading-tight mt-1">
+                Automated Money Cushion for Freelancers & Gig Workers
+              </p>
+            </div>
+          </Link>
+
+          {/* Navigation Links */}
+          <nav className="hidden lg:flex items-center space-x-1 pl-4 border-l border-[#eae8e3]">
+            <Link
+              href="/"
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                isDashboard
+                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] shadow-xs"
+                  : "text-[#4b5563] hover:text-[#111827] hover:bg-[#fbfbfa]"
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>Dashboard</span>
+            </Link>
+
+            <Link
+              href="/calendar"
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                isCalendar
+                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] shadow-xs"
+                  : "text-[#4b5563] hover:text-[#111827] hover:bg-[#fbfbfa]"
+              }`}
+            >
+              <CalendarDays className="w-3.5 h-3.5" />
+              <span>Cash Flow Calendar</span>
+              <span className="ml-1 px-1.5 py-0.2 text-[9px] font-extrabold bg-[#059669] text-white rounded-full">
+                New
+              </span>
+            </Link>
+          </nav>
         </div>
 
         {/* Right Actions */}
         <div className="flex items-center space-x-2.5">
+          {/* Import CSV Button */}
+          {onOpenImportCsv && (
+            <button
+              onClick={currentUser ? onOpenImportCsv : onOpenAuth}
+              className="px-2.5 py-1.5 text-xs font-semibold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center space-x-1.5 transition-all shadow-xs"
+              title="Import Statement CSV (Bank / UPI / Gig Payouts)"
+            >
+              <UploadCloud className="w-3.5 h-3.5 text-[#059669]" />
+              <span className="hidden sm:inline">Import CSV</span>
+            </button>
+          )}
+
           {/* Record Transaction Button */}
           <button
             onClick={currentUser ? onOpenAddTransaction : onOpenAuth}

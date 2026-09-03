@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from app.api.v1.endpoints import (
-    auth, users, transactions, income, buffer, resilience, recommendations, notifications, ai, allocation
+    auth, users, transactions, income, buffer, resilience, recommendations, notifications, ai, allocation, calendar
 )
 
 api_router = APIRouter()
@@ -15,4 +15,6 @@ api_router.include_router(recommendations.router, prefix="/recommendations", tag
 api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])
 api_router.include_router(ai.router, prefix="/ai", tags=["ai"])
 api_router.include_router(allocation.router, prefix="/allocation", tags=["allocation"])
+api_router.include_router(calendar.router, prefix="/calendar", tags=["calendar"])
+api_router.include_router(calendar.obligations_router, prefix="/obligations", tags=["obligations"])
 

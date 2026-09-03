@@ -1,13 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Search, Trash2, PlusCircle, ReceiptText } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Search, Trash2, PlusCircle, ReceiptText, UploadCloud } from "lucide-react";
 import { Transaction } from "../lib/types";
 
 interface TransactionTableProps {
   transactions: Transaction[];
   onDeleteTransaction?: (id: number) => void;
   onOpenAddTransaction?: () => void;
+  onOpenImportCsv?: () => void;
   currencySymbol?: string;
 }
 
@@ -15,6 +16,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
   transactions,
   onDeleteTransaction,
   onOpenAddTransaction,
+  onOpenImportCsv,
   currencySymbol = "₹",
 }) => {
   const [filter, setFilter] = useState("");
@@ -49,6 +51,18 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
         </div>
 
         <div className="flex items-center space-x-2.5">
+          {/* Import CSV Button */}
+          {onOpenImportCsv && (
+            <button
+              onClick={onOpenImportCsv}
+              className="px-3 py-1.5 text-xs font-semibold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] border border-[#eae8e3] rounded-xl flex items-center space-x-1.5 transition-all shadow-xs"
+              title="Upload bank/UPI statement CSV"
+            >
+              <UploadCloud className="w-3.5 h-3.5 text-[#059669]" />
+              <span className="hidden sm:inline">Import Statement</span>
+            </button>
+          )}
+
           {/* Quick Add Button */}
           {onOpenAddTransaction && (
             <button

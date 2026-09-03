@@ -33,6 +33,7 @@ class User(Base):
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
     allocation_plans = relationship("MoneyAllocationPlan", back_populates="user", cascade="all, delete-orphan")
     goals = relationship("FinancialGoal", back_populates="user", cascade="all, delete-orphan")
+    obligations = relationship("ScheduledObligation", back_populates="user", cascade="all, delete-orphan")
 
 
 class FinancialProfile(Base):
@@ -222,3 +223,23 @@ class MoneyAllocationPlan(Base):
 
     user = relationship("User", back_populates="allocation_plans")
     source_transaction = relationship("Transaction")
+
+
+class ScheduledObligation(Base):
+    __tablename__ = "scheduled_obligations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    title = Column(String(150), nullable=False)
+    amount = Column(Float, nullable=False)
+    category = Column(String(100), default="bills", nullable=False)
+    due_day = Column(Integer, nullable=True)  # 1-31 for monthly bills
+    next_due_date = Column(DateTime, nullable=True)
+    frequency = Column(String(30), default="monthly", nullable=False)  # "weekly", "monthly", "quarterly", "yearly", "once"
+    is_essential = Column(Boolean, default=True, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    reminder_days_before = Column(Integer, default=3, nullable=False)
+    created_at = Column(DateTime, default=utcnow)
+    updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
+
+    user = relationship("User", back_populates="obligations")

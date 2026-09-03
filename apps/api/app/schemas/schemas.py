@@ -317,3 +317,183 @@ class FinancialGoalOut(BaseModel):
     class Config:
         from_attributes = True
 
+
+# --- Scheduled Obligations & Cash Flow Calendar ---
+class ScheduledObligationCreate(BaseModel):
+    title: str = Field(..., min_length=1, max_length=150)
+    amount: float = Field(..., gt=0)
+    category: Optional[str] = "bills"
+    due_day: Optional[int] = Field(None, ge=1, le=31)
+    next_due_date: Optional[datetime] = None
+    frequency: str = Field("monthly", pattern="^(weekly|monthly|quarterly|yearly|once)$")
+    is_essential: bool = True
+    reminder_days_before: int = Field(3, ge=0, le=30)
+
+
+class ScheduledObligationUpdate(BaseModel):
+    title: Optional[str] = Field(None, min_length=1, max_length=150)
+    amount: Optional[float] = Field(None, gt=0)
+    category: Optional[str] = None
+    due_day: Optional[int] = Field(None, ge=1, le=31)
+    next_due_date: Optional[datetime] = None
+    frequency: Optional[str] = Field(None, pattern="^(weekly|monthly|quarterly|yearly|once)$")
+    is_essential: Optional[bool] = None
+    is_active: Optional[bool] = None
+    reminder_days_before: Optional[int] = Field(None, ge=0, le=30)
+
+
+class ScheduledObligationOut(BaseModel):
+    id: int
+    user_id: int
+    title: str
+    amount: float
+    category: str
+    due_day: Optional[int] = None
+    next_due_date: Optional[datetime] = None
+    frequency: str
+    is_essential: bool
+    is_active: bool
+    reminder_days_before: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class CalendarEventOut(BaseModel):
+    id: str
+    title: str
+    amount: float
+    category: str
+    event_type: str  # "INCOME", "EXPENSE", "OBLIGATION", "FORECAST"
+    is_essential: bool = False
+    is_forecast: bool = False
+    confidence: Optional[float] = None
+    obligation_id: Optional[int] = None
+    transaction_id: Optional[int] = None
+    time_hint: Optional[str] = None
+
+
+class CalendarDayOut(BaseModel):
+    date: str  # "YYYY-MM-DD"
+    day_number: int
+    day_of_week: str  # "Mon", "Tue", etc.
+    is_current_month: bool = True
+    is_today: bool = False
+    events: List[CalendarEventOut] = []
+    total_inflow: float = 0.0
+    total_outflow: float = 0.0
+    net_flow: float = 0.0
+    projected_balance: float = 0.0
+    is_risk_day: bool = False
+    risk_level: str = "SAFE"  # "SAFE", "CAUTION", "CRITICAL"
+    risk_reasons: List[str] = []
+    status_label: str = "Normal"
+
+
+class CalendarMonthSummary(BaseModel):
+    expected_income: float
+    essential_outflows: float
+    total_outflows: float
+    net_projected: float
+    critical_gap_date: Optional[str] = None
+    critical_gap_amount: float = 0.0
+    critical_gap_reason: Optional[str] = None
+    current_buffer_balance: float
+    safe_available_buffer: float
+    minimum_buffer_floor: float
+    minimum_cash_reserve: float
+    projection_fidelity_score: float = 94.2
+    settled_inflow: float = 0.0
+    pending_inflow: float = 0.0
+    exposure_amount: float = 0.0
+
+
+class CalendarMonthOut(BaseModel):
+    year: int
+    month: int
+    month_name: str
+    currency: str = "INR"
+    opening_balance: float
+    opening_balance_source: str
+    days: List[CalendarDayOut]
+    summary: CalendarMonthSummary
+    total_obligations: int
+    total_transactions: int
+
+
+class IntradayTimingItem(BaseModel):
+    time: str  # e.g. "09:00 AM"
+    label: str
+    amount: float
+    flow_type: str  # "DEBIT" or "CREDIT"
+    running_balance: float
+    is_breach: bool = False
+
+
+class CalendarDayDetailOut(BaseModel):
+    date: str
+    day_data: CalendarDayOut
+    intraday_timeline: List[IntradayTimingItem]
+    deterministic_diagnosis: str
+    safe_buffer_available: float
+    buffer_floor_safeguard: float
+    buffer_needed: float
+    is_buffer_sufficient: bool
+    can_smooth_with_buffer: bool
+
+
+# --- CSV Statement Import & Categorization ---
+class CsvPreviewItem(BaseModel):
+    row_index: int
+    date: str
+    description: str
+    clean_description: str
+    amount: float
+    transaction_type: str  # "INCOME" | "EXPENSE"
+    category: str
+    is_essential: bool
+    confidence: float
+    is_duplicate: bool
+    duplicate_reason: Optional[str] = None
+    selected: bool = True
+
+
+class CsvPreviewResponse(BaseModel):
+    total_rows: int
+    valid_rows: int
+    duplicate_rows: int
+    total_inflow: float
+    total_outflow: float
+    items: List[CsvPreviewItem]
+
+
+class CsvCommitItem(BaseModel):
+    date: str
+    description: str
+    amount: float = Field(..., gt=0)
+    transaction_type: str = Field(..., pattern="^(INCOME|EXPENSE)$")
+    category: str
+    is_essential: bool = False
+    source: Optional[str] = "csv_import"
+
+
+class CsvCommitRequest(BaseModel):
+    items: List[CsvCommitItem]
+
+
+class CsvCommitResponse(BaseModel):
+    imported_count: int
+    total_inflow: float
+    total_outflow: float
+    message: str
+
+
+class CategoryMetadataOut(BaseModel):
+    id: str
+    label: str
+    is_income: bool
+    is_essential: bool
+    color: str
+

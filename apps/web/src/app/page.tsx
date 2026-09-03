@@ -16,6 +16,7 @@ import { HowItWorksModal } from "../components/HowItWorksModal";
 import { AuthModal } from "../components/AuthModal";
 import { OnboardingModal } from "../components/OnboardingModal";
 import { AddTransactionModal } from "../components/AddTransactionModal";
+import { CsvImportModal } from "../components/import/CsvImportModal";
 import {
   IncomeAnalytics,
   IncomeForecast,
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
   const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
   const [addTxModalOpen, setAddTxModalOpen] = useState<boolean>(false);
+  const [importCsvModalOpen, setImportCsvModalOpen] = useState<boolean>(false);
 
   // Financial Analytics & Buffer State
   const [analytics, setAnalytics] = useState<IncomeAnalytics | null>(null);
@@ -203,6 +205,7 @@ export default function DashboardPage() {
         onOpenAuth={() => setAuthModalOpen(true)}
         onLogout={handleLogout}
         onOpenAddTransaction={() => setAddTxModalOpen(true)}
+        onOpenImportCsv={() => setImportCsvModalOpen(true)}
       />
 
       {/* Main Content Container */}
@@ -305,6 +308,7 @@ export default function DashboardPage() {
           transactions={transactions}
           onDeleteTransaction={currentUser ? handleDeleteTransaction : undefined}
           onOpenAddTransaction={() => setAddTxModalOpen(true)}
+          onOpenImportCsv={() => setImportCsvModalOpen(true)}
         />
 
       </main>
@@ -358,6 +362,17 @@ export default function DashboardPage() {
           showToast("✅ Transaction recorded successfully.");
           refreshData();
         }}
+      />
+
+      {/* CSV Import Statement Modal */}
+      <CsvImportModal
+        isOpen={importCsvModalOpen}
+        onClose={() => setImportCsvModalOpen(false)}
+        onImportComplete={async () => {
+          showToast("Statement transactions imported successfully!");
+          await refreshData();
+        }}
+        currency={currentUser?.currency || "INR"}
       />
 
       {/* Interactive Simulation Modal */}

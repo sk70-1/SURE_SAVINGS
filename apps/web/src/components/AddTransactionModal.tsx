@@ -10,6 +10,7 @@ interface AddTransactionModalProps {
   onClose: () => void;
   onTransactionAdded: () => void;
   currencySymbol?: string;
+  initialType?: "INCOME" | "EXPENSE";
 }
 
 export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
@@ -17,8 +18,15 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   onClose,
   onTransactionAdded,
   currencySymbol = "₹",
+  initialType = "INCOME",
 }) => {
-  const [type, setType] = useState<"INCOME" | "EXPENSE">("INCOME");
+  const [type, setType] = useState<"INCOME" | "EXPENSE">(initialType);
+
+  React.useEffect(() => {
+    if (initialType) {
+      setType(initialType);
+    }
+  }, [initialType, isOpen]);
   const [amount, setAmount] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [category, setCategory] = useState<string>("freelance");

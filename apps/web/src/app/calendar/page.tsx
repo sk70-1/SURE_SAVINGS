@@ -6,6 +6,7 @@ import { CalendarSummaryCards } from "../../components/calendar/CalendarSummaryC
 import { CashFlowCalendar } from "../../components/calendar/CashFlowCalendar";
 import { DayInspector } from "../../components/calendar/DayInspector";
 import { CashPressureView } from "../../components/calendar/CashPressureView";
+import { UpcomingBillsListView } from "../../components/calendar/UpcomingBillsListView";
 import { ObligationModal } from "../../components/calendar/ObligationModal";
 import { CalendarEmptyState } from "../../components/calendar/CalendarEmptyState";
 import { AddTransactionModal } from "../../components/AddTransactionModal";
@@ -20,7 +21,6 @@ import {
   CalendarDay,
   CalendarDayDetail,
   CreateObligationPayload,
-  UpdateObligationPayload,
   AuthUser,
   BufferStatus,
   AllocationPlan,
@@ -30,14 +30,10 @@ import { api, getAuthToken, setAuthToken, setDemoMode, getIsDemoMode } from "../
 import {
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
   PlusCircle,
-  Clock,
   Sparkles,
   AlertTriangle,
   RotateCw,
-  Sliders,
-  ShieldCheck,
   Lock,
 } from "lucide-react";
 
@@ -53,16 +49,17 @@ export default function CalendarPage() {
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
   const [isProMode, setIsProMode] = useState(false);
 
-  // Calendar Data State
+  // Calendar Data State - Default to "bills" list view per UX requirements
   const [monthData, setMonthData] = useState<CalendarMonthData | null>(null);
   const [selectedDay, setSelectedDay] = useState<CalendarDay | null>(null);
   const [dayDetail, setDayDetail] = useState<CalendarDayDetail | null>(null);
-  const [viewMode, setViewMode] = useState<"calendar" | "list" | "pressure">("calendar");
+  const [viewMode, setViewMode] = useState<"bills" | "calendar" | "pressure">("bills");
 
   // Modals & Sub-actions State
   const [addObligationOpen, setAddObligationOpen] = useState(false);
   const [addTxModalOpen, setAddTxModalOpen] = useState(false);
   const [bufferModalOpen, setBufferModalOpen] = useState(false);
+  const [bufferMode, setBufferMode] = useState<"CONTRIBUTION" | "WITHDRAWAL">("CONTRIBUTION");
   const [bufferStatus, setBufferStatus] = useState<BufferStatus | null>(null);
   const [allocationModalOpen, setAllocationModalOpen] = useState(false);
   const [allocationPlan, setAllocationPlan] = useState<AllocationPlan | null>(null);
@@ -113,7 +110,7 @@ export default function CalendarPage() {
         setSelectedDay(initial);
       }
     } catch (err: any) {
-      setError(err.message || "Failed to load cash flow calendar.");
+      setError(err.message || "Failed to load upcoming bills & calendar.");
     } finally {
       setLoading(false);
     }
@@ -166,7 +163,7 @@ export default function CalendarPage() {
   // Add / Create Obligation
   const handleCreateObligation = async (payload: CreateObligationPayload) => {
     await api.createObligation(payload);
-    showToast(`Mandate "${payload.title}" created successfully!`);
+    showToast(`Bill "${payload.title}" scheduled successfully!`);
     await loadMonthData();
   };
 
@@ -174,7 +171,6 @@ export default function CalendarPage() {
   const handleActivateDemoMode = async () => {
     setDemoMode(true, "arjun@example.com");
     showToast("Loaded demo sandbox for Arjun Mehta (Freelance UX Designer)!");
-    // Set to reference month (September 2026) for immediate demonstration
     setYear(2026);
     setMonth(9);
     await loadMonthData();
@@ -190,6 +186,8 @@ export default function CalendarPage() {
       setBufferModalOpen(true);
     }
   };
+
+  const hasRiskDays = monthData ? monthData.days.some((d) => d.is_risk_day) : false;
 
   const isEmptyState =
     monthData &&
@@ -214,6 +212,8 @@ export default function CalendarPage() {
           showToast("You have been signed out.");
         }}
         onOpenAddTransaction={() => setAddTxModalOpen(true)}
+        isDemoMode={getIsDemoMode()}
+        onToggleDemoMode={handleActivateDemoMode}
       />
 
       {/* Toast Notification */}
@@ -231,19 +231,19 @@ export default function CalendarPage() {
             <div className="flex items-center space-x-2 text-[#9a3412]">
               <Lock className="w-4 h-4 text-[#ff5b45] shrink-0" />
               <span>
-                You are currently previewing in read-only mode. <strong>Sign in</strong> or activate a demo persona to save scheduled bills and simulate buffer smoothing.
+                You are currently previewing in read-only mode. <strong>Sign in</strong> or activate a demo persona to save bills and see your personalized safety status.
               </span>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
               <button
                 onClick={() => setAuthModalOpen(true)}
-                className="px-3 py-1.5 font-bold text-white bg-[#ff5b45] hover:bg-[#e04835] rounded-xl shadow-xs transition-all"
+                className="px-3 py-1.5 font-bold text-white bg-[#ff5b45] hover:bg-[#e04835] rounded-xl shadow-xs transition-all cursor-pointer"
               >
                 Sign In / Register
               </button>
               <button
                 onClick={handleActivateDemoMode}
-                className="px-3 py-1.5 font-bold text-[#ff5b45] bg-white border border-[#ffdad4] hover:bg-[#fff0ed] rounded-xl transition-all"
+                className="px-3 py-1.5 font-bold text-[#ff5b45] bg-white border border-[#ffdad4] hover:bg-[#fff0ed] rounded-xl transition-all cursor-pointer"
               >
                 Try Demo Sandbox
               </button>
@@ -255,30 +255,25 @@ export default function CalendarPage() {
       {/* Main Page Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Page Top Header */}
+        {/* Page Top Header - Cleaned and friendly */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="flex items-center space-x-2.5">
-              <h1 className="text-2xl sm:text-3xl font-black text-[#111827] tracking-tight">
-                Cash Flow Calendar
-              </h1>
-              <span className="px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider rounded-full bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
-                Deterministic v2.4
-              </span>
-            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#111827] tracking-tight">
+              Upcoming Bills & Cash Calendar
+            </h1>
             <p className="text-xs sm:text-sm text-[#6b7280] font-medium mt-1">
-              See your income rhythm and upcoming financial pressure points before balance crunches occur.
+              Track rent and upcoming bills so you know well in advance if your money is covered.
             </p>
           </div>
 
           {/* Month Selector & Controls */}
           <div className="flex flex-wrap items-center gap-2.5">
             {/* Previous / Next Month Navigation */}
-            <div className="flex items-center space-x-1 bg-white border border-[#eae8e3] rounded-xl p-1 shadow-xs">
+            <div className="flex items-center space-x-1 bg-white border border-[#eae8e3] rounded-2xl p-1 shadow-xs">
               <button
                 onClick={handlePrevMonth}
                 aria-label="Previous Month"
-                className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
+                className="p-1.5 rounded-xl text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
@@ -290,7 +285,7 @@ export default function CalendarPage() {
               <button
                 onClick={handleNextMonth}
                 aria-label="Next Month"
-                className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
+                className="p-1.5 rounded-xl text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -299,83 +294,79 @@ export default function CalendarPage() {
             {/* Today Button */}
             <button
               onClick={handleGoToday}
-              className="px-3 py-1.5 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-white hover:bg-[#f3f4f6] border border-[#eae8e3] rounded-xl shadow-xs transition-all"
+              className="px-3 py-1.5 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-white hover:bg-[#f3f4f6] border border-[#eae8e3] rounded-2xl shadow-xs transition-all cursor-pointer"
             >
               Today
             </button>
 
-            {/* View Mode Toggle: Calendar | List | Cash Pressure */}
-            <div className="flex items-center p-1 bg-[#f3f4f6] rounded-xl text-xs font-bold space-x-1">
-              <button
-                onClick={() => setViewMode("calendar")}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  viewMode === "calendar"
-                    ? "bg-white text-[#111827] shadow-xs"
-                    : "text-[#6b7280] hover:text-[#111827]"
-                }`}
-              >
-                Calendar
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`px-3 py-1 rounded-lg transition-all ${
-                  viewMode === "list"
-                    ? "bg-white text-[#111827] shadow-xs"
-                    : "text-[#6b7280] hover:text-[#111827]"
-                }`}
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode("pressure")}
-                className={`px-3 py-1 rounded-lg transition-all flex items-center space-x-1 ${
-                  viewMode === "pressure"
-                    ? "bg-[#fff1f2] text-[#e11d48] shadow-xs border border-[#fecdd3]"
-                    : "text-[#6b7280] hover:text-[#111827]"
-                }`}
-              >
-                <span>Cash Pressure</span>
-                {monthData?.days.some((d) => d.is_risk_day) && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#e11d48]" />
-                )}
-              </button>
-            </div>
-
-
+            {/* Primary Action Button: Add Bill */}
             <button
               onClick={() => setAddObligationOpen(true)}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] rounded-xl flex items-center space-x-1.5 shadow-sm transition-all"
+              className="px-4 py-2 text-xs font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] rounded-2xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-4 h-4" />
               <span>Add Bill</span>
             </button>
-
-            <button
-              onClick={() => setAddTxModalOpen(true)}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] rounded-xl flex items-center space-x-1.5 shadow-sm transition-all"
-            >
-              <PlusCircle className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Add Transaction</span>
-            </button>
           </div>
+        </div>
+
+        {/* View Mode Toggle Tabs */}
+        <div className="flex items-center space-x-2 border-b border-[#eae8e3] pb-3">
+          <button
+            onClick={() => setViewMode("bills")}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === "bills"
+                ? "bg-[#111827] text-white shadow-xs"
+                : "bg-white text-[#6b7280] hover:text-[#111827] border border-[#eae8e3]"
+            }`}
+          >
+            Upcoming Bills List
+          </button>
+
+          <button
+            onClick={() => setViewMode("calendar")}
+            className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all cursor-pointer ${
+              viewMode === "calendar"
+                ? "bg-[#111827] text-white shadow-xs"
+                : "bg-white text-[#6b7280] hover:text-[#111827] border border-[#eae8e3]"
+            }`}
+          >
+            Monthly Calendar
+          </button>
+
+          {/* Money Tightness Tab: ONLY shown if a risk/tightness day is detected */}
+          {hasRiskDays && (
+            <button
+              onClick={() => setViewMode("pressure")}
+              className={`px-4 py-2 rounded-2xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
+                viewMode === "pressure"
+                  ? "bg-[#fff1f2] text-[#e11d48] border border-[#fecdd3] shadow-xs"
+                  : "bg-white text-[#e11d48] hover:bg-[#fff5f5] border border-[#fecdd3]"
+              }`}
+            >
+              <AlertTriangle className="w-3.5 h-3.5" />
+              <span>Money Tightness</span>
+              <span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />
+            </button>
+          )}
         </div>
 
         {/* Loading Skeleton */}
         {loading && !monthData && (
           <div className="space-y-4 animate-pulse">
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 h-24 bg-white/60 rounded-2xl" />
-            <div className="h-[450px] bg-white/60 rounded-2xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 h-24 bg-white/60 rounded-3xl" />
+            <div className="h-[450px] bg-white/60 rounded-3xl" />
           </div>
         )}
 
         {/* Error State with Retry */}
         {error && (
-          <div className="p-6 bg-[#fff5f5] border border-[#fecdd3] rounded-2xl text-center space-y-3">
+          <div className="p-6 bg-[#fff5f5] border border-[#fecdd3] rounded-3xl text-center space-y-3">
             <AlertTriangle className="w-8 h-8 text-[#e11d48] mx-auto" />
             <p className="text-sm font-bold text-[#9f1239]">{error}</p>
             <button
               onClick={loadMonthData}
-              className="px-4 py-2 bg-white text-xs font-bold text-[#e11d48] border border-[#fecdd3] rounded-xl hover:bg-[#ffe4e6] inline-flex items-center space-x-1.5"
+              className="px-4 py-2 bg-white text-xs font-bold text-[#e11d48] border border-[#fecdd3] rounded-xl hover:bg-[#ffe4e6] inline-flex items-center space-x-1.5 cursor-pointer"
             >
               <RotateCw className="w-3.5 h-3.5" />
               <span>Retry</span>
@@ -403,18 +394,29 @@ export default function CalendarPage() {
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                {/* Main View Area: Calendar Grid or List/Pressure */}
+                {/* Main View Area: Default Bills List, Calendar Grid, or Money Tightness */}
                 <div className="lg:col-span-8 space-y-4">
-                  {viewMode === "calendar" ? (
+                  {viewMode === "bills" && (
+                    <UpcomingBillsListView
+                      data={monthData}
+                      onOpenAddBill={() => setAddObligationOpen(true)}
+                      onSelectDay={(d) => setSelectedDay(d)}
+                      selectedDay={selectedDay}
+                    />
+                  )}
+
+                  {viewMode === "calendar" && (
                     <CashFlowCalendar
                       data={monthData}
                       selectedDay={selectedDay}
                       onSelectDay={(d) => setSelectedDay(d)}
                     />
-                  ) : (
+                  )}
+
+                  {viewMode === "pressure" && (
                     <CashPressureView
                       data={monthData}
-                      mode={viewMode}
+                      mode="pressure"
                       selectedDay={selectedDay}
                       onSelectDay={(d) => setSelectedDay(d)}
                       onOpenAddObligation={() => setAddObligationOpen(true)}
@@ -453,21 +455,20 @@ export default function CalendarPage() {
         isOpen={addTxModalOpen}
         onClose={() => setAddTxModalOpen(false)}
         onTransactionAdded={async () => {
-          showToast("Transaction recorded successfully!");
+          showToast("Transaction saved! Cash flow updated.");
           await loadMonthData();
         }}
       />
 
-
       {/* Buffer Simulation Modal */}
       <BufferModal
         isOpen={bufferModalOpen}
+        mode={bufferMode}
         onClose={() => setBufferModalOpen(false)}
-        mode="WITHDRAWAL"
         buffer={bufferStatus}
-        onSubmit={async (amt, m) => {
-          await api.simulateBuffer(amt, m, "Calendar liquidity simulation");
-          showToast(`Simulated ${m.toLowerCase()} of ₹${amt.toLocaleString("en-IN")}`);
+        onSubmit={async (amount, action) => {
+          await api.simulateBuffer(amount, action);
+          showToast(`Buffer ${action.toLowerCase()} recorded.`);
           await loadMonthData();
         }}
       />
@@ -477,34 +478,20 @@ export default function CalendarPage() {
         isOpen={allocationModalOpen}
         onClose={() => setAllocationModalOpen(false)}
         plan={allocationPlan}
-        onApproved={async () => {
-          showToast("Allocation plan approved.");
-          await loadMonthData();
-        }}
+        onApproved={loadMonthData}
         showToast={showToast}
       />
 
-      {/* AI Assistant Drawer */}
+      {/* Grounded AI Explanation Drawer */}
       <AiDrawer
         isOpen={aiDrawerOpen}
         onClose={() => setAiDrawerOpen(false)}
       />
 
-      {/* How It Works Modal */}
+      {/* How It Works Explainer Modal */}
       <HowItWorksModal
         isOpen={howItWorksOpen}
         onClose={() => setHowItWorksOpen(false)}
-      />
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        onAuthSuccess={(user) => {
-          setCurrentUser(user);
-          showToast(`Welcome back, ${user.full_name}!`);
-          loadMonthData();
-        }}
       />
 
     </div>

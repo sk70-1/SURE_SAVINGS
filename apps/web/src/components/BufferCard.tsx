@@ -17,31 +17,57 @@ export const BufferCard: React.FC<BufferCardProps> = ({
   onOpenWithdraw,
   isProMode = false,
 }) => {
-  const defaultBuffer: BufferStatus = {
-    current_balance: 16500,
-    target_amount: 30000,
-    minimum_floor: 6000,
-    available_safe_buffer: 10500,
-    buffer_gap: 13500,
-    coverage_weeks: 2.8,
-    status: "Healthy",
-  };
-  const activeBuffer = buffer || defaultBuffer;
+  if (!buffer) {
+    return (
+      <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
+        <div>
+          <div className="flex items-center space-x-2 mb-2">
+            <h3 className="text-sm font-bold text-[#111827]">Emergency Savings</h3>
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
+              Starting Out
+            </span>
+          </div>
+          <p className="text-xs text-[#6b7280]">
+            Your backup fund to cover slow or unpaid weeks.
+          </p>
+          <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
+            <span className="text-3xl font-black text-[#9ca3af] font-mono">₹0</span>
+            <p className="text-xs text-[#6b7280] mt-1">
+              Add your first deposit or payout to build your savings.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={onOpenDeposit}
+          className="w-full py-2.5 text-xs font-bold text-[#059669] bg-[#ecfdf5] hover:bg-[#d1fae5] rounded-xl border border-[#a7f3d0] transition-colors flex items-center justify-center space-x-1 cursor-pointer"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>Start Emergency Savings</span>
+        </button>
+      </div>
+    );
+  }
 
-  const targetPct = Math.min(100, Math.round((activeBuffer.current_balance / activeBuffer.target_amount) * 100));
-  const floorPct = Math.min(100, Math.round((activeBuffer.minimum_floor / activeBuffer.target_amount) * 100));
+  const currentBalance = Math.round(buffer.current_balance);
+  const targetAmount = Math.max(1, Math.round(buffer.target_amount));
+  const minimumFloor = Math.round(buffer.minimum_floor);
+  const safeBuffer = Math.round(buffer.available_safe_buffer);
+  const coverageWeeks = Number(buffer.coverage_weeks.toFixed(1));
+
+  const targetPct = Math.min(100, Math.round((currentBalance / targetAmount) * 100));
+  const floorPct = Math.min(100, Math.round((minimumFloor / targetAmount) * 100));
 
   return (
-    <div className="glass-panel rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between">
+    <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
       <div>
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-[#111827] tracking-wide">
+              <h3 className="text-sm font-bold text-[#111827]">
                 Emergency Savings
               </h3>
               <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fffbeb] text-[#d97706] border border-[#fef3c7]">
-                {activeBuffer.coverage_weeks} Weeks Covered
+                {coverageWeeks} Weeks Covered
               </span>
             </div>
             <p className="text-xs text-[#6b7280] mt-1">Your backup fund to cover slow or unpaid weeks</p>
@@ -50,7 +76,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           <div className="text-right">
             <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Total Saved</span>
             <div className="text-3xl font-black text-[#111827] tracking-tight font-mono">
-              ₹{Math.round(activeBuffer.current_balance).toLocaleString("en-IN")}
+              ₹{currentBalance.toLocaleString("en-IN")}
             </div>
           </div>
         </div>
@@ -59,24 +85,23 @@ export const BufferCard: React.FC<BufferCardProps> = ({
         <div className="mt-4">
           <div className="flex justify-between text-xs text-[#6b7280] mb-1.5">
             <span>
-              Goal: <strong className="text-[#111827]">₹{Math.round(activeBuffer.target_amount).toLocaleString("en-IN")}</strong>
+              Goal: <strong className="text-[#111827]">₹{targetAmount.toLocaleString("en-IN")}</strong>
             </span>
             <span className="font-bold text-[#f59e0b]">{targetPct}% of Goal</span>
           </div>
 
-          <div className="relative w-full h-3.5 bg-[#f3f4f6] rounded-full overflow-hidden border border-[#eae8e3]">
-            {/* Protected floor strip */}
+          <div className="relative w-full h-3 bg-[#f3f4f6] rounded-full overflow-hidden border border-[#eae8e3]">
+            {/* Minimum Safe Savings strip */}
             <div
               className="absolute top-0 bottom-0 left-0 bg-[#f59e0b]/30 border-r-2 border-[#f59e0b] z-10"
               style={{ width: `${floorPct}%` }}
-              title="Protected Emergency Floor"
-            ></div>
-
+              title="Minimum Safe Savings"
+            />
             {/* Current balance */}
             <div
-              className="h-full bg-gradient-to-r from-[#f59e0b] via-[#ff7461] to-[#ff5b45] rounded-full transition-all duration-500 shadow-sm"
+              className="h-full bg-gradient-to-r from-[#f59e0b] via-[#ff7461] to-[#ff5b45] rounded-full transition-all duration-500"
               style={{ width: `${targetPct}%` }}
-            ></div>
+            />
           </div>
 
           {/* 2 Clear Reserve Buckets */}
@@ -84,10 +109,10 @@ export const BufferCard: React.FC<BufferCardProps> = ({
             <div className="bg-[#fffbeb] p-2.5 rounded-xl border border-[#fef3c7]">
               <div className="flex items-center space-x-1.5 text-[#b45309] mb-0.5">
                 <Lock className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Emergency Floor</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">Minimum Safe Savings</span>
               </div>
               <div className="text-xs font-bold text-[#92400e] font-mono">
-                ₹{Math.round(activeBuffer.minimum_floor).toLocaleString("en-IN")}
+                ₹{minimumFloor.toLocaleString("en-IN")}
               </div>
               <span className="text-[10px] text-[#b45309]/80 block mt-0.5">Untouchable for rent & food</span>
             </div>
@@ -98,30 +123,31 @@ export const BufferCard: React.FC<BufferCardProps> = ({
                 <span className="text-[10px] font-bold uppercase tracking-wider">Safe to Use</span>
               </div>
               <div className="text-xs font-bold text-[#065f46] font-mono">
-                ₹{Math.round(activeBuffer.available_safe_buffer).toLocaleString("en-IN")}
+                ₹{safeBuffer.toLocaleString("en-IN")}
               </div>
-              <span className="text-[10px] text-[#047857]/80 block mt-0.5">Ready to use when work is slow</span>
+              <span className="text-[10px] text-[#047857]/80 block mt-0.5">Available for emergencies</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Buttons */}
-      <div className="flex items-center space-x-2.5 mt-4">
+      {/* Action Buttons */}
+      <div className="mt-5 grid grid-cols-2 gap-2 pt-3 border-t border-[#f3f4f6]">
         <button
           onClick={onOpenDeposit}
-          className="flex-1 py-2.5 px-3 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl flex items-center justify-center space-x-1.5 transition-all shadow-md shadow-[#ff5b45]/30 active:scale-95"
+          className="px-3 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#059669] to-[#047857] hover:opacity-95 rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
         >
           <PlusCircle className="w-3.5 h-3.5" />
-          <span>Add Money</span>
+          <span>Save Money</span>
         </button>
 
         <button
           onClick={onOpenWithdraw}
-          className="flex-1 py-2.5 px-3 text-xs font-bold text-[#374151] bg-[#ffffff] hover:bg-[#f9fafb] rounded-xl flex items-center justify-center space-x-1.5 transition-all border border-[#eae8e3] shadow-sm active:scale-95"
+          disabled={safeBuffer <= 0}
+          className="px-3 py-2 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center justify-center space-x-1.5 transition-all disabled:opacity-40 cursor-pointer"
         >
           <ArrowDownCircle className="w-3.5 h-3.5" />
-          <span>Withdraw Money</span>
+          <span>Use Cushion</span>
         </button>
       </div>
     </div>

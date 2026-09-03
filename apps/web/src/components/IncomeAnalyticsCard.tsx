@@ -10,39 +10,50 @@ interface IncomeAnalyticsCardProps {
 }
 
 export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analytics, isProMode = false }) => {
-  const defaultAnalytics: IncomeAnalytics = {
-    stabilized_income: 18500,
-    mean_income: 19000,
-    median_income: 18500,
-    standard_deviation: 3200,
-    coefficient_of_variation: 0.17,
-    volatility_rating: "Low",
-    recent_actual_income: 20000,
-    income_trend: "Stable",
-    formula_explanation: "Weighted rolling baseline based on payout frequency.",
-  };
-  const activeAnalytics = analytics || defaultAnalytics;
+  if (!analytics) {
+    return (
+      <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
+        <div>
+          <div className="flex items-center space-x-2 mb-2">
+            <h3 className="text-sm font-bold text-[#111827]">Average Weekly Pay</h3>
+            <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
+              Needs History
+            </span>
+          </div>
+          <p className="text-xs text-[#6b7280]">
+            Your normal weekly pay based on past history.
+          </p>
+          <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
+            <span className="text-3xl font-black text-[#9ca3af] font-mono">₹0 / wk</span>
+            <p className="text-xs text-[#6b7280] mt-1">
+              Record a few earnings payouts to establish your weekly normal pay.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const diff = activeAnalytics.recent_actual_income - activeAnalytics.stabilized_income;
+  const diff = analytics.recent_actual_income - analytics.stabilized_income;
   const isAbove = diff >= 0;
 
   let predictability = "Normal Fluctuations";
   let predBadge = "bg-[#fffbeb] text-[#b45309] border-[#fef3c7]";
-  if (activeAnalytics.volatility_rating === "Low") {
+  if (analytics.volatility_rating === "Low") {
     predictability = "Steady Pay";
     predBadge = "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]";
-  } else if (activeAnalytics.volatility_rating === "High" || activeAnalytics.volatility_rating === "Extreme") {
+  } else if (analytics.volatility_rating === "High" || analytics.volatility_rating === "Extreme") {
     predictability = "Unpredictable Pay";
     predBadge = "bg-[#fff5f3] text-[#b91c1c] border-[#fecdd3]";
   }
 
   return (
-    <div className="glass-panel rounded-2xl p-6 flex flex-col justify-between">
+    <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
       <div>
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-bold text-[#111827] tracking-wide">
+              <h3 className="text-sm font-bold text-[#111827]">
                 Average Weekly Pay
               </h3>
               <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${predBadge}`}>
@@ -55,7 +66,7 @@ export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analyt
           <div className="text-right">
             <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Normal Pay</span>
             <div className="text-3xl font-black text-[#111827] tracking-tight font-mono">
-              ₹{Math.round(activeAnalytics.stabilized_income).toLocaleString("en-IN")}
+              ₹{Math.round(analytics.stabilized_income).toLocaleString("en-IN")}
               <span className="text-xs font-normal text-[#9ca3af] font-sans">/wk</span>
             </div>
           </div>
@@ -63,48 +74,36 @@ export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analyt
 
         {/* Comparison to This Week */}
         <div className="mt-4 grid grid-cols-2 gap-3">
-          <div className="bg-[#fbfbfa] p-3 rounded-xl border border-[#eae8e3]">
+          <div className="bg-[#fbfbfa] p-3 rounded-2xl border border-[#eae8e3]">
             <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block font-medium">This Week's Pay</span>
             <div className="flex items-baseline space-x-1.5 mt-0.5">
               <span className="text-sm font-bold text-[#111827] font-mono">
-                ₹{Math.round(activeAnalytics.recent_actual_income).toLocaleString("en-IN")}
+                ₹{Math.round(analytics.recent_actual_income).toLocaleString("en-IN")}
               </span>
-              <span className={`text-[10px] font-bold font-mono ${isAbove ? "text-[#059669]" : "text-[#dc2626]"}`}>
+              <span className={`text-[10px] font-bold ${isAbove ? "text-[#059669]" : "text-[#ea580c]"}`}>
                 {isAbove ? `+₹${Math.round(diff).toLocaleString("en-IN")}` : `-₹${Math.round(Math.abs(diff)).toLocaleString("en-IN")}`}
               </span>
             </div>
           </div>
 
-          <div className="bg-[#fbfbfa] p-3 rounded-xl border border-[#eae8e3]">
-            <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block font-medium">Week Status</span>
-            <div className="flex items-center space-x-1.5 mt-0.5">
-              {isAbove ? (
-                <div className="flex items-center space-x-1 text-[#059669] text-xs font-bold">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                  <span>Good Week 🎉</span>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-1 text-[#dc2626] text-xs font-bold">
-                  <TrendingDown className="w-3.5 h-3.5" />
-                  <span>Slow Week</span>
-                </div>
-              )}
+          <div className="bg-[#fbfbfa] p-3 rounded-2xl border border-[#eae8e3]">
+            <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block font-medium">Earnings Trend</span>
+            <div className="flex items-center space-x-1.5 mt-1">
+              {analytics.income_trend === "Growing" && <TrendingUp className="w-4 h-4 text-[#059669]" />}
+              {analytics.income_trend === "Declining" && <TrendingDown className="w-4 h-4 text-[#e11d48]" />}
+              {analytics.income_trend === "Stable" && <CheckCircle2 className="w-4 h-4 text-[#0284c7]" />}
+              <span className="text-xs font-bold text-[#111827]">{analytics.income_trend}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      {isProMode ? (
-        <div className="mt-3 pt-2.5 border-t border-[#eae8e3] text-[10px] font-mono text-[#6b7280] flex justify-between">
-          <span>0.60×Median + 0.40×Average</span>
-          <span>CV: {activeAnalytics.coefficient_of_variation.toFixed(2)}</span>
+        {/* Explainability in human terms */}
+        <div className="mt-3 p-3 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3] text-xs text-[#4b5563]">
+          <p className="leading-relaxed">
+            {analytics.formula_explanation || "Calculated from your past payout cycles to protect against income dips."}
+          </p>
         </div>
-      ) : (
-        <div className="mt-3 pt-2.5 border-t border-[#eae8e3] text-[11px] text-[#6b7280] flex items-center space-x-1.5">
-          <CheckCircle2 className="w-3.5 h-3.5 text-[#ff5b45] shrink-0" />
-          <span>Filters out temporary spikes so you don't overspend</span>
-        </div>
-      )}
+      </div>
     </div>
   );
 };

@@ -1,12 +1,22 @@
 "use client";
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Sparkles, HelpCircle, Sliders, ShieldCheck,
-  User as UserIcon, LogOut, PlusCircle,
-  CalendarDays, LayoutDashboard
+  ShieldCheck,
+  PlusCircle,
+  CalendarDays,
+  LayoutDashboard,
+  Menu,
+  X,
+  HelpCircle,
+  Sparkles,
+  Sliders,
+  LogOut,
+  User as UserIcon,
+  ToggleLeft,
+  ToggleRight,
 } from "lucide-react";
 import { AuthUser } from "../lib/types";
 
@@ -21,6 +31,8 @@ interface NavbarProps {
   onOpenAuth: () => void;
   onLogout: () => void;
   onOpenAddTransaction: () => void;
+  isDemoMode?: boolean;
+  onToggleDemoMode?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -34,43 +46,58 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenAuth,
   onLogout,
   onOpenAddTransaction,
+  isDemoMode = false,
+  onToggleDemoMode,
 }) => {
   const pathname = usePathname();
   const isDashboard = pathname === "/";
   const isCalendar = pathname === "/calendar";
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuOpen]);
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#eae8e3] bg-white/95 backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[4.25rem] py-2.5 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         
-        {/* Sure-Savings Brand */}
-        <div className="flex items-center gap-4 shrink-0">
-          <Link href="/" className="flex items-center gap-3.5 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#ff5b45] to-[#f59e0b] flex items-center justify-center shadow-md shadow-[#ff5b45]/25 shrink-0 group-hover:scale-105 transition-transform">
+        {/* Left: Brand Logo & Primary Navigation */}
+        <div className="flex items-center gap-3 sm:gap-6 shrink-0">
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#ff5b45] to-[#f59e0b] flex items-center justify-center shadow-sm shadow-[#ff5b45]/20 shrink-0 group-hover:scale-105 transition-transform">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
-            <div className="flex flex-col justify-center text-left">
-              <div className="flex items-center gap-2 leading-none">
-                <span className="text-[17px] font-black tracking-tight text-[#111827] font-sans">
-                  Sure-<span className="text-[#ff5b45]">Savings</span>
-                </span>
-                <span className="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded-full bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4]">
-                  Smart Cushion
-                </span>
-              </div>
-              <p className="text-[11px] text-[#6b7280] font-medium leading-tight mt-1">
-                Automated Money Cushion for Freelancers & Gig Workers
-              </p>
+            <div className="flex flex-col text-left">
+              <span className="text-base font-black tracking-tight text-[#111827] font-sans">
+                Sure-<span className="text-[#ff5b45]">Savings</span>
+              </span>
+              <span className="text-[10px] text-[#6b7280] font-medium hidden sm:block">
+                Daily Money Guide for Freelancers
+              </span>
             </div>
           </Link>
 
-          {/* Navigation Links */}
-          <nav className="hidden lg:flex items-center space-x-1 pl-4 border-l border-[#eae8e3]">
+          {/* Clean Primary Navigation (Dashboard & Calendar only) */}
+          <nav className="flex items-center space-x-1 pl-2 sm:pl-4 border-l border-[#eae8e3]">
             <Link
               href="/"
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 isDashboard
-                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] shadow-xs"
+                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4]"
                   : "text-[#4b5563] hover:text-[#111827] hover:bg-[#fbfbfa]"
               }`}
             >
@@ -80,107 +107,183 @@ export const Navbar: React.FC<NavbarProps> = ({
 
             <Link
               href="/calendar"
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
                 isCalendar
-                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] shadow-xs"
+                  ? "bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4]"
                   : "text-[#4b5563] hover:text-[#111827] hover:bg-[#fbfbfa]"
               }`}
             >
               <CalendarDays className="w-3.5 h-3.5" />
-              <span>Cash Flow Calendar</span>
-              <span className="ml-1 px-1.5 py-0.2 text-[9px] font-extrabold bg-[#059669] text-white rounded-full">
-                New
-              </span>
+              <span>Upcoming Bills</span>
             </Link>
           </nav>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center space-x-2.5">
-          {/* Record Transaction Button */}
+        {/* Right: Only "+ Add Transaction" and "Profile / Menu" */}
+        <div className="flex items-center space-x-2" ref={menuRef}>
+          {/* Primary Action: Add Transaction */}
           <button
-            onClick={currentUser ? onOpenAddTransaction : onOpenAuth}
-            className="px-3 py-1.5 text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] rounded-xl flex items-center space-x-1.5 shadow-sm transition-all"
+            onClick={currentUser || isDemoMode ? onOpenAddTransaction : onOpenAuth}
+            className="px-3.5 py-2 text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] rounded-xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
+            <PlusCircle className="w-4 h-4" />
             <span className="hidden sm:inline">Add Transaction</span>
+            <span className="sm:hidden">Add</span>
           </button>
 
-          {/* How It Works Button */}
-          <button
-            onClick={onOpenHowItWorks}
-            className="px-2.5 py-1.5 text-xs font-semibold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center space-x-1.5 transition-all shadow-sm"
-          >
-            <HelpCircle className="w-3.5 h-3.5 text-[#ff5b45]" />
-            <span className="hidden sm:inline">How It Works</span>
-          </button>
-
-          {/* Simple vs Detailed View Toggle */}
-          <button
-            onClick={onToggleProMode}
-            className={`px-2.5 py-1.5 text-xs font-semibold rounded-xl border transition-all flex items-center space-x-1.5 shadow-sm ${
-              isProMode
-                ? "bg-[#fff5f3] text-[#ff5b45] border-[#ffdad4]"
-                : "bg-[#fbfbfa] text-[#6b7280] hover:text-[#111827] border-[#eae8e3]"
-            }`}
-            title="Toggle between Simple View and Detailed Math View"
-          >
-            <Sliders className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">{isProMode ? "Detailed View" : "Simple View"}</span>
-          </button>
-
-          {/* Autopilot Feature Toggle Button */}
-          {onToggleAutopilot && (
+          {/* Profile / Menu Dropdown Trigger */}
+          <div className="relative">
             <button
-              onClick={onToggleAutopilot}
-              className={`px-2.5 py-1.5 text-xs font-bold rounded-xl border transition-all flex items-center space-x-1.5 shadow-sm ${
-                isAutopilotActive
-                  ? "bg-[#fff5f3] text-[#ff5b45] border-[#ffdad4]"
-                  : "bg-[#fbfbfa] text-[#9ca3af] hover:text-[#111827] border-[#eae8e3]"
-              }`}
-              title="Toggle Money Allocation Autopilot Feature ON/OFF"
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="px-2.5 py-2 text-xs font-semibold text-[#374151] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center space-x-2 transition-all cursor-pointer"
+              aria-label="Profile and settings menu"
             >
-              <Sparkles className={`w-3.5 h-3.5 ${isAutopilotActive ? "text-[#ff5b45]" : "text-[#9ca3af]"}`} />
-              <span className="hidden sm:inline">
-                Autopilot: {isAutopilotActive ? "ON" : "OFF"}
-              </span>
+              {currentUser ? (
+                <div className="flex items-center space-x-1.5">
+                  <div className="w-5 h-5 rounded-full bg-[#ffdad4] text-[#ff5b45] flex items-center justify-center font-bold text-[10px]">
+                    {currentUser.full_name?.charAt(0) || "U"}
+                  </div>
+                  <span className="hidden md:inline font-bold text-xs max-w-[100px] truncate">
+                    {currentUser.full_name}
+                  </span>
+                </div>
+              ) : isDemoMode ? (
+                <div className="flex items-center space-x-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="hidden md:inline font-bold text-xs text-amber-700">Demo User</span>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-1 text-[#6b7280]">
+                  <UserIcon className="w-4 h-4" />
+                  <span className="hidden md:inline text-xs font-bold">Sign In</span>
+                </div>
+              )}
+              {menuOpen ? <X className="w-3.5 h-3.5 text-[#6b7280]" /> : <Menu className="w-3.5 h-3.5 text-[#6b7280]" />}
             </button>
-          )}
 
-          {/* User Profile / Auth State Button */}
-          {currentUser ? (
-            <div className="flex items-center space-x-2 pl-1 border-l border-[#eae8e3]">
-              <div className="flex items-center space-x-1.5 bg-[#fbfbfa] border border-[#eae8e3] px-2.5 py-1.5 rounded-xl">
-                <UserIcon className="w-3.5 h-3.5 text-[#ff5b45]" />
-                <span className="text-xs font-bold text-[#111827] max-w-[120px] truncate">
-                  {currentUser.full_name}
-                </span>
+            {/* Dropdown Menu */}
+            {menuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white border border-[#eae8e3] rounded-2xl shadow-xl p-2 z-50 animate-fadeIn space-y-1">
+                {/* User Info Header */}
+                <div className="px-3 py-2 border-b border-[#f3f4f6] mb-1">
+                  {currentUser ? (
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af]">Logged in as</span>
+                      <p className="text-xs font-bold text-[#111827] truncate">{currentUser.full_name}</p>
+                      <p className="text-[11px] text-[#6b7280] truncate">{currentUser.email}</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className="text-xs font-bold text-[#111827]">Welcome to Sure-Savings</span>
+                      <p className="text-[11px] text-[#6b7280]">Sign in to keep your money plan private</p>
+                      <button
+                        onClick={() => {
+                          setMenuOpen(false);
+                          onOpenAuth();
+                        }}
+                        className="mt-2 w-full py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] rounded-xl cursor-pointer"
+                      >
+                        Sign In / Register
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* How it works */}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenHowItWorks();
+                  }}
+                  className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
+                >
+                  <HelpCircle className="w-4 h-4 text-[#ff5b45]" />
+                  <span>How it works</span>
+                </button>
+
+                {/* AI Assistant */}
+                <button
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onOpenAi();
+                  }}
+                  className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
+                >
+                  <Sparkles className="w-4 h-4 text-[#ff5b45]" />
+                  <span>Ask Assistant</span>
+                </button>
+
+                {/* Toggle: Detailed vs Simple View */}
+                <button
+                  onClick={onToggleProMode}
+                  className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center justify-between transition-colors cursor-pointer text-left"
+                >
+                  <div className="flex items-center space-x-2.5">
+                    <Sliders className="w-4 h-4 text-[#6b7280]" />
+                    <span>Detailed View</span>
+                  </div>
+                  {isProMode ? (
+                    <ToggleRight className="w-5 h-5 text-[#ff5b45]" />
+                  ) : (
+                    <ToggleLeft className="w-5 h-5 text-[#9ca3af]" />
+                  )}
+                </button>
+
+                {/* Toggle: Automatic Money Plan */}
+                {onToggleAutopilot && (
+                  <button
+                    onClick={onToggleAutopilot}
+                    className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center justify-between transition-colors cursor-pointer text-left"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <Sparkles className="w-4 h-4 text-[#059669]" />
+                      <span>Automatic Money Plan</span>
+                    </div>
+                    {isAutopilotActive ? (
+                      <ToggleRight className="w-5 h-5 text-[#059669]" />
+                    ) : (
+                      <ToggleLeft className="w-5 h-5 text-[#9ca3af]" />
+                    )}
+                  </button>
+                )}
+
+                {/* Demo Sandbox Mode Switch */}
+                {onToggleDemoMode && (
+                  <button
+                    onClick={() => {
+                      onToggleDemoMode();
+                      setMenuOpen(false);
+                    }}
+                    className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center justify-between transition-colors cursor-pointer text-left"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <span className={`w-2.5 h-2.5 rounded-full ${isDemoMode ? "bg-amber-500" : "bg-gray-300"}`} />
+                      <span>Demo Sandbox</span>
+                    </div>
+                    <span className="text-[10px] text-[#6b7280] font-bold">
+                      {isDemoMode ? "ON" : "OFF"}
+                    </span>
+                  </button>
+                )}
+
+                {/* Sign Out Button */}
+                {currentUser && (
+                  <div className="pt-1 border-t border-[#f3f4f6]">
+                    <button
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onLogout();
+                      }}
+                      className="w-full px-3 py-2 text-xs font-bold text-[#e11d48] hover:bg-[#fff1f2] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                )}
               </div>
-              <button
-                onClick={onLogout}
-                className="p-2 text-[#9ca3af] hover:text-[#e11d48] hover:bg-[#fff1f2] rounded-xl border border-transparent hover:border-[#fecdd3] transition-all"
-                title="Log Out"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={onOpenAuth}
-              className="px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-md shadow-[#ff5b45]/20 transition-all"
-            >
-              Sign In / Register
-            </button>
-          )}
-
-          {/* AI Assistant */}
-          <button
-            onClick={onOpenAi}
-            className="px-3 py-1.5 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center space-x-1.5 transition-all shadow-sm"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#ff5b45]" />
-            <span className="hidden sm:inline">Assistant</span>
-          </button>
+            )}
+          </div>
         </div>
 
       </div>

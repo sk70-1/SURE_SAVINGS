@@ -9,13 +9,15 @@ import { IncomeChart } from "../components/IncomeChart";
 import { RecommendationFeed } from "../components/RecommendationFeed";
 import { TransactionTable } from "../components/TransactionTable";
 import { BufferModal } from "../components/BufferModal";
-import { AiDrawer } from "../components/AiDrawer";
-import { HowItWorksModal } from "../components/HowItWorksModal";
 import { MoneyAllocationCard } from "../components/MoneyAllocationCard";
 import { MoneyAllocationModal } from "../components/MoneyAllocationModal";
+import { AiDrawer } from "../components/AiDrawer";
+import { HowItWorksModal } from "../components/HowItWorksModal";
+import { AuthModal } from "../components/AuthModal";
+import { OnboardingModal } from "../components/OnboardingModal";
+import { AddTransactionModal } from "../components/AddTransactionModal";
 import {
   PersonaOption,
-  UserProfile,
   IncomeAnalytics,
   IncomeForecast,
   BufferStatus,
@@ -23,14 +25,23 @@ import {
   Recommendation,
   Transaction,
   AllocationPlan,
+  AuthUser,
 } from "../lib/types";
-import { api, setActivePersonaEmail } from "../lib/api";
-import { Sparkles, Shield, AlertTriangle, CheckCircle, Info, HelpCircle } from "lucide-react";
+import { api, setActivePersonaEmail, setAuthToken, getAuthToken, setDemoMode } from "../lib/api";
+import { Sparkles, CheckCircle, FlaskConical, ArrowRight } from "lucide-react";
 
 export default function DashboardPage() {
   const [personas, setPersonas] = useState<PersonaOption[]>([]);
   const [activePersona, setActivePersona] = useState<PersonaOption | null>(null);
 
+  // Real User Authentication & Isolation State
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [isDemoMode, setIsDemoMode] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [onboardingModalOpen, setOnboardingModalOpen] = useState<boolean>(false);
+  const [addTxModalOpen, setAddTxModalOpen] = useState<boolean>(false);
+
+  // Financial Analytics & Buffer State
   const [analytics, setAnalytics] = useState<IncomeAnalytics | null>(null);
   const [forecast, setForecast] = useState<IncomeForecast | null>(null);
   const [buffer, setBuffer] = useState<BufferStatus | null>(null);
@@ -38,14 +49,15 @@ export default function DashboardPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [allocationPlan, setAllocationPlan] = useState<AllocationPlan | null>(null);
-  const [allocationModalOpen, setAllocationModalOpen] = useState(false);
+  const [allocationModalOpen, setAllocationModalOpen] = useState<boolean>(false);
 
-  const [modalOpen, setModalOpen] = useState(false);
+  // UI Modes & Modals
+  const [modalOpen, setModalOpen] = useState<boolean>(false);
   const [modalMode, setModalMode] = useState<"CONTRIBUTION" | "WITHDRAWAL">("CONTRIBUTION");
-  const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
-  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
-  const [isProMode, setIsProMode] = useState(false);
-  const [isAutopilotActive, setIsAutopilotActive] = useState(true);
+  const [aiDrawerOpen, setAiDrawerOpen] = useState<boolean>(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState<boolean>(false);
+  const [isProMode, setIsProMode] = useState<boolean>(false);
+  const [isAutopilotActive, setIsAutopilotActive] = useState<boolean>(true);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [demoBanner, setDemoBanner] = useState<string | null>(null);
@@ -64,14 +76,36 @@ export default function DashboardPage() {
     );
   };
 
-  // Initial load: fetch personas and initial profile
+  // Initial load: check auth session & fetch personas
   useEffect(() => {
     async function init() {
+      const token = getAuthToken();
+      if (token) {
+        try {
+          const me = await api.getMe();
+          setCurrentUser(me);
+          setIsDemoMode(false);
+          setDemoMode(false);
+          if (!me.onboarding_completed) {
+            setOnboardingModalOpen(true);
+          }
+        } catch (e) {
+          console.warn("Session expired or invalid, switching to demo mode", e);
+          setAuthToken(null);
+          setCurrentUser(null);
+          setIsDemoMode(true);
+          setDemoMode(true);
+        }
+      } else {
+        // No session: default to demo sandbox mode
+        setIsDemoMode(true);
+        setDemoMode(true);
+      }
+
       try {
         const personaList = await api.getPersonas();
         setPersonas(personaList);
         if (personaList.length > 0) {
-          // Default to Arjun Mehta (Golden Path A)
           const defaultP = personaList.find((p) => p.email === "arjun@example.com") || personaList[0];
           setActivePersona(defaultP);
           setActivePersonaEmail(defaultP.email);
@@ -83,108 +117,166 @@ export default function DashboardPage() {
     init();
   }, []);
 
-  // Whenever persona changes or refreshes
+  // Fetch / refresh dashboard metrics
   const refreshData = async () => {
     try {
       const [an, fc, buf, res, recs, txs, alloc] = await Promise.all([
-        api.getIncomeAnalytics(),
-        api.getIncomeForecast(),
-        api.getBufferStatus(),
-        api.getResilienceScore(),
-        api.getRecommendations(),
-        api.getTransactions(30),
+        api.getIncomeAnalytics().catch(() => null),
+        api.getIncomeForecast().catch(() => null),
+        api.getBufferStatus().catch(() => null),
+        api.getResilienceScore().catch(() => null),
+        api.getRecommendations().catch(() => []),
+        api.getTransactions(50).catch(() => []),
         api.getCurrentAllocationPlan().catch(() => null),
       ]);
       setAnalytics(an);
       setForecast(fc);
       setBuffer(buf);
       setResilience(res);
-      setRecommendations(recs);
-      setTransactions(txs);
+      setRecommendations(recs || []);
+      setTransactions(txs || []);
       if (alloc) setAllocationPlan(alloc);
     } catch (e) {
       console.error("Error refreshing dashboard data", e);
     }
   };
 
+  // Trigger refresh when user, active persona, or demo mode changes
   useEffect(() => {
-    if (activePersona) {
-      setActivePersonaEmail(activePersona.email);
+    refreshData();
+  }, [currentUser, activePersona, isDemoMode]);
+
+  // Auth Success Handler
+  const handleAuthSuccess = (user: AuthUser, needsOnboarding: boolean) => {
+    setCurrentUser(user);
+    setIsDemoMode(false);
+    setDemoMode(false);
+    showToast(`👋 Welcome, ${user.full_name}! Real account active.`);
+    if (needsOnboarding) {
+      setOnboardingModalOpen(true);
     }
     refreshData();
-  }, [activePersona]);
-
-  // Persona switch handler
-  const handleSelectPersona = (p: PersonaOption) => {
-    setActivePersonaEmail(p.email);
-    setActivePersona(p);
-    showToast(`Switched persona to ${p.full_name} (${p.persona_name})`);
   };
 
-  // Buffer Simulation Submit
-  const handleBufferSubmit = async (amount: number, mode: "CONTRIBUTION" | "WITHDRAWAL") => {
-    const res = await api.simulateBuffer(amount, mode);
-    showToast(res.message);
-    await refreshData();
+  // Logout Handler
+  const handleLogout = async () => {
+    try {
+      await api.logout().catch(() => {});
+    } finally {
+      setAuthToken(null);
+      setCurrentUser(null);
+      setIsDemoMode(true);
+      setDemoMode(true);
+      showToast("🔒 Logged out. Switched to Demo Sandbox.");
+      refreshData();
+    }
   };
 
-  // Recommendation Action Handlers
-  const handleApproveRecommendation = async (id: number) => {
-    const rec = await api.approveRecommendation(id);
-    showToast(`Approved: ${rec.what}`);
-    await refreshData();
+  // Demo Sandbox Toggle Handler
+  const handleToggleDemoMode = () => {
+    const nextMode = !isDemoMode;
+    setIsDemoMode(nextMode);
+    setDemoMode(nextMode);
+    if (nextMode) {
+      showToast("🧪 Switched to Demo Sandbox Mode (Testing Personas).");
+    } else if (currentUser) {
+      showToast(`👤 Switched to Real Account (${currentUser.full_name}).`);
+    } else {
+      setAuthModalOpen(true);
+    }
+    refreshData();
   };
 
-  const handleDismissRecommendation = async (id: number) => {
-    await api.dismissRecommendation(id);
-    showToast("Recommendation dismissed.");
-    await refreshData();
+  // Delete transaction handler
+  const handleDeleteTransaction = async (id: number) => {
+    try {
+      await api.deleteTransaction(id);
+      showToast("🗑️ Transaction removed.");
+      refreshData();
+    } catch (err: any) {
+      showToast(`Error: ${err.message}`);
+    }
   };
 
   // Golden Path Demo Triggers
   const triggerDemoPathA = () => {
+    setIsDemoMode(true);
+    setDemoMode(true);
     const arjun = personas.find((p) => p.email === "arjun@example.com");
     if (arjun) {
-      setActivePersonaEmail(arjun.email);
       setActivePersona(arjun);
+      setActivePersonaEmail(arjun.email);
+      setDemoBanner("Scenario A: Freelancer Arjun received ₹15,000 surplus. System calculated ₹900 Safe-to-Save cap.");
+      showToast("Loaded Scenario A: High-Income Surplus");
     }
-    setDemoBanner(
-      "🌟 Example A Active: Arjun Sharma (Freelancer) had a great week earning ₹15,000! Sure-Savings suggests putting away ₹900 into his emergency cushion without hurting daily cash."
-    );
-    showToast("Example A Loaded: Arjun Mehta (Freelance UX)");
   };
 
   const triggerDemoPathB = () => {
+    setIsDemoMode(true);
+    setDemoMode(true);
     const vikram = personas.find((p) => p.email === "vikram@example.com");
     if (vikram) {
-      setActivePersonaEmail(vikram.email);
       setActivePersona(vikram);
+      setActivePersonaEmail(vikram.email);
+      setDemoBanner("Scenario B: Cab Driver Vikram had a slow week (₹3,800). Protected buffer floor protects rent & food.");
+      showToast("Loaded Scenario B: Slow Week & Floor Guard");
     }
-    setDemoBanner(
-      "🛡️ Example B Active: Vikram Singh (Rideshare Driver) had a slow week earning ₹3,800. Sure-Savings suggests safely using ₹1,200 from his backup savings while keeping his ₹5,000 emergency floor safe for rent."
-    );
-    showToast("Example B Loaded: Vikram Singh (Rideshare Driver)");
   };
 
   const triggerDemoPathC = () => {
+    setIsDemoMode(true);
+    setDemoMode(true);
     const ramesh = personas.find((p) => p.email === "ramesh@example.com");
     if (ramesh) {
-      setActivePersonaEmail(ramesh.email);
       setActivePersona(ramesh);
+      setActivePersonaEmail(ramesh.email);
+      setDemoBanner("Scenario C: Daily-Wage Construction Worker Ramesh (₹1,000/day). Safety-first essential budgeting.");
+      showToast("Loaded Scenario C: Low-Income Construction Worker");
     }
-    setDemoBanner(
-      "🧱 Example C Active: Ramesh Kumar (Daily-Wage Construction Worker) has a very fragile weekly income (~₹2,100/wk). After monsoon rains stopped site work, his payout dropped to ₹1,000. Sure-Savings guards his ₹1,500 emergency survival floor for rations and shared rent."
+  };
+
+  // Handle Buffer Deposit / Withdrawal Simulation
+  const handleBufferSubmit = async (amount: number, action: "CONTRIBUTION" | "WITHDRAWAL", notes?: string) => {
+    const res = await api.simulateBuffer(amount, action, notes);
+    showToast(
+      action === "CONTRIBUTION"
+        ? `✅ Saved ₹${amount.toLocaleString("en-IN")} into smart cushion.`
+        : `🛡️ Drew down ₹${amount.toLocaleString("en-IN")} to safely cover shortfall.`
     );
-    showToast("Example C Loaded: Ramesh Kumar (Construction Worker)");
+    await refreshData();
+  };
+
+  // Handle Recommendation Action
+  const handleApproveRecommendation = async (id: number) => {
+    try {
+      await api.approveRecommendation(id);
+      showToast("✅ Recommendation approved and executed.");
+      await refreshData();
+    } catch (e: any) {
+      showToast(`Error: ${e.message}`);
+    }
+  };
+
+  const handleDismissRecommendation = async (id: number) => {
+    try {
+      await api.dismissRecommendation(id);
+      showToast("Recommendation dismissed.");
+      await refreshData();
+    } catch (e: any) {
+      showToast(`Error: ${e.message}`);
+    }
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background selection:bg-brand-500 selection:text-white">
-      {/* Top Navbar */}
+    <div className="min-h-screen flex flex-col bg-[#fbfbfa] text-[#111827]">
+      {/* Top Navigation Bar */}
       <Navbar
         personas={personas}
         activePersona={activePersona}
-        onSelectPersona={handleSelectPersona}
+        onSelectPersona={(p) => {
+          setActivePersona(p);
+          setActivePersonaEmail(p.email);
+        }}
         onOpenAi={() => setAiDrawerOpen(true)}
         onOpenDemoPathA={triggerDemoPathA}
         onOpenDemoPathB={triggerDemoPathB}
@@ -194,34 +286,68 @@ export default function DashboardPage() {
         onToggleProMode={() => setIsProMode(!isProMode)}
         isAutopilotActive={isAutopilotActive}
         onToggleAutopilot={() => handleToggleAutopilot(!isAutopilotActive)}
+        currentUser={currentUser}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
+        onOpenAddTransaction={() => setAddTxModalOpen(true)}
+        isDemoMode={isDemoMode}
+        onToggleDemoMode={handleToggleDemoMode}
       />
 
       {/* Main Content Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Sure-Savings Banner Strip */}
-        <div className="bg-white border border-[#eae8e3] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
-          <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-[#fff5f3] border border-[#ffdad4] text-[#ff5b45] flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
-              ⚡
+        {/* Demo Mode Sandbox Notice Banner */}
+        {isDemoMode ? (
+          <div className="bg-[#fffbeb] border border-[#fde68a] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-white border border-[#fde68a] text-[#d97706] flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
+                <FlaskConical className="w-5 h-5" />
+              </div>
+              <div className="flex flex-col justify-center text-left">
+                <span className="text-xs font-bold text-[#92400e] leading-snug">
+                  Demo Sandbox Mode Active ({activePersona?.full_name || "Synthetic Persona"})
+                </span>
+                <p className="text-[11px] text-[#b45309] font-normal leading-snug mt-0.5">
+                  You are viewing pre-seeded practice data. Real money is never moved. Create your private account to start tracking your own finances.
+                </p>
+              </div>
             </div>
-            <div className="flex flex-col justify-center text-left">
-              <span className="text-xs font-bold text-[#111827] leading-snug">Sure-Savings Smart Money Cushion</span>
-              <p className="text-[11px] text-[#6b7280] font-normal leading-snug mt-0.5">
-                Saves extra money during good weeks and safely covers slow weeks so you can always pay rent and bills on time.
-              </p>
-            </div>
+            <button
+              onClick={() => setAuthModalOpen(true)}
+              className="text-xs font-bold text-white bg-[#d97706] hover:bg-[#b45309] px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm self-start sm:self-auto flex items-center space-x-1.5"
+            >
+              <span>Create Real Account</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <button
-            onClick={() => setHowItWorksOpen(true)}
-            className="text-xs font-bold text-[#ff5b45] hover:text-[#f05138] bg-[#fff5f3] hover:bg-[#ffe8e4] border border-[#ffdad4] px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm self-start sm:self-auto"
-          >
-            How it works in 60s →
-          </button>
-        </div>
+        ) : (
+          /* Real User Active Banner */
+          <div className="bg-white border border-[#eae8e3] rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-sm">
+            <div className="flex items-center gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-[#ecfdf5] border border-[#a7f3d0] text-[#059669] flex items-center justify-center font-bold text-base shrink-0 shadow-sm">
+                🔒
+              </div>
+              <div className="flex flex-col justify-center text-left">
+                <span className="text-xs font-bold text-[#111827] leading-snug">
+                  Personal Account: {currentUser?.full_name}
+                </span>
+                <p className="text-[11px] text-[#6b7280] font-normal leading-snug mt-0.5">
+                  Your transactions and money buffer are strictly private and isolated. All calculations run deterministically on your data.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setAddTxModalOpen(true)}
+              className="text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] px-4 py-2 rounded-xl transition-all whitespace-nowrap shadow-sm self-start sm:self-auto"
+            >
+              + Add Transaction
+            </button>
+          </div>
+        )}
 
         {/* Example Scenario Banner if Active */}
-        {demoBanner && (
+        {demoBanner && isDemoMode && (
           <div className="bg-white p-4 rounded-2xl border-2 border-[#ff5b45]/30 text-xs flex items-start justify-between gap-3 animate-fade-in shadow-md shadow-[#ff5b45]/10">
             <div className="flex items-start space-x-2.5">
               <Sparkles className="w-4 h-4 text-[#ff5b45] mt-0.5 shrink-0" />
@@ -283,8 +409,12 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Spending & Income History */}
-        <TransactionTable transactions={transactions} />
+        {/* Spending & Income History with Add & Delete capabilities */}
+        <TransactionTable
+          transactions={transactions}
+          onDeleteTransaction={currentUser ? handleDeleteTransaction : undefined}
+          onOpenAddTransaction={() => setAddTxModalOpen(true)}
+        />
 
       </main>
 
@@ -294,7 +424,7 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-2">
             <span className="font-bold text-[#111827] text-sm">Sure-<span className="text-[#ff5b45]">Savings</span></span>
             <span className="text-[#9ca3af]">•</span>
-            <span className="text-[#6b7280]">Smart Money Cushion for Freelancers</span>
+            <span className="text-[#6b7280]">Smart Money Cushion for Freelancers & Gig Workers</span>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-[#6b7280] font-mono">
@@ -303,14 +433,41 @@ export default function DashboardPage() {
               <span>100% Floor Protected</span>
             </span>
             <span className="text-[#d1d5db]">|</span>
-            <span>Transparent Math</span>
+            <span>Deterministic Math</span>
             <span className="text-[#d1d5db]">|</span>
             <span>Zero Predatory Loans</span>
             <span className="text-[#d1d5db]">|</span>
-            <span>Safe for Rent & Groceries</span>
+            <span>Isolated Real Accounts</span>
           </div>
         </div>
       </footer>
+
+      {/* Auth Modal (Login / Register) */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
+
+      {/* Onboarding Modal (First time configuration) */}
+      <OnboardingModal
+        isOpen={onboardingModalOpen}
+        onClose={() => setOnboardingModalOpen(false)}
+        onComplete={() => {
+          showToast("🎉 Financial configuration saved!");
+          refreshData();
+        }}
+      />
+
+      {/* Add Transaction Modal */}
+      <AddTransactionModal
+        isOpen={addTxModalOpen}
+        onClose={() => setAddTxModalOpen(false)}
+        onTransactionAdded={() => {
+          showToast("✅ Transaction recorded successfully.");
+          refreshData();
+        }}
+      />
 
       {/* Interactive Simulation Modal */}
       <BufferModal

@@ -18,6 +18,10 @@ class User(Base):
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
+    is_demo = Column(Boolean, default=False)
+    onboarding_completed = Column(Boolean, default=False)
+    currency = Column(String(10), default="INR")
+    country = Column(String(50), default="India")
     created_at = Column(DateTime, default=utcnow)
 
     # Relationships
@@ -38,6 +42,8 @@ class FinancialProfile(Base):
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
     persona_name = Column(String(100), default="General Earner")
     persona_type = Column(String(50), default="moderate_volatile")
+    pay_frequency = Column(String(30), default="weekly")
+    target_buffer = Column(Float, default=25000.0)
     minimum_cash_reserve = Column(Float, default=2000.0)  # Unbreakable checking reserve
     minimum_buffer_floor = Column(Float, default=5000.0)  # Unbreakable buffer floor
     essential_weekly_expenses = Column(Float, default=5000.0)

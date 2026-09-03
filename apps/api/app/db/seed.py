@@ -57,12 +57,16 @@ def seed_database():
                 print(f"User {prof_data['email']} already exists. Skipping.")
                 continue
 
-            # 1. Create User
+            # 1. Create User (marked as synthetic demo account)
             user = User(
                 email=prof_data["email"],
                 hashed_password=hash_password("password123"),
                 full_name=prof_data["name"],
-                is_active=True
+                is_active=True,
+                is_demo=True,
+                onboarding_completed=True,
+                currency="INR",
+                country="India"
             )
             db.add(user)
             db.flush()
@@ -260,4 +264,8 @@ def seed_database():
 
 
 if __name__ == "__main__":
+    reset = "--reset" in sys.argv
+    if reset:
+        print("Dropping existing tables for clean schema migration...")
+        Base.metadata.drop_all(bind=engine)
     seed_database()

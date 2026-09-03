@@ -160,3 +160,46 @@ export interface FinancialGoal {
   is_completed: boolean;
 }
 
+export interface AuthUser {
+  id: number;
+  email: string;
+  full_name: string;
+  is_active: boolean;
+  is_demo: boolean;
+  onboarding_completed: boolean;
+  currency: string;
+  country: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type: string;
+  user_id: number;
+  email: string;
+  full_name: string;
+  is_demo: boolean;
+  onboarding_completed: boolean;
+  currency: string;
+}
+
+export interface OnboardingPayload {
+  currency: string;
+  country: string;
+  pay_frequency: string;
+  essential_weekly_expenses: number;
+  target_buffer: number;
+  minimum_buffer_floor: number;
+  minimum_cash_reserve: number;
+}
+
+export interface CreateTransactionPayload {
+  date: string;
+  amount: number;
+  description: string;
+  category: string;
+  transaction_type: "INCOME" | "EXPENSE";
+  is_essential: boolean;
+  source?: string;
+}
+

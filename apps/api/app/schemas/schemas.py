@@ -8,6 +8,8 @@ class UserCreate(BaseModel):
     email: EmailStr
     password: str = Field(..., min_length=6)
     full_name: str
+    currency: Optional[str] = "INR"
+    country: Optional[str] = "India"
 
 
 class UserLogin(BaseModel):
@@ -17,10 +19,18 @@ class UserLogin(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
     user_id: int
     email: str
     full_name: str
+    is_demo: bool = False
+    onboarding_completed: bool = False
+    currency: str = "INR"
+
+
+class TokenRefreshRequest(BaseModel):
+    refresh_token: str
 
 
 class UserOut(BaseModel):
@@ -28,16 +38,32 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     is_active: bool
+    is_demo: bool = False
+    onboarding_completed: bool = False
+    currency: str = "INR"
+    country: str = "India"
     created_at: datetime
 
     class Config:
         from_attributes = True
 
 
-# --- Financial Profile ---
+# --- Onboarding & Financial Profile ---
+class OnboardingIn(BaseModel):
+    currency: str = "INR"
+    country: str = "India"
+    pay_frequency: str = "weekly"  # "weekly", "biweekly", "monthly", "irregular"
+    essential_weekly_expenses: float = Field(..., gt=0)
+    target_buffer: float = Field(..., gt=0)
+    minimum_buffer_floor: float = Field(..., ge=0)
+    minimum_cash_reserve: float = Field(default=2500.0, ge=0)
+
+
 class FinancialProfileUpdate(BaseModel):
     persona_name: Optional[str] = None
     persona_type: Optional[str] = None
+    pay_frequency: Optional[str] = None
+    target_buffer: Optional[float] = None
     minimum_cash_reserve: Optional[float] = None
     minimum_buffer_floor: Optional[float] = None
     essential_weekly_expenses: Optional[float] = None
@@ -49,6 +75,8 @@ class FinancialProfileOut(BaseModel):
     user_id: int
     persona_name: str
     persona_type: str
+    pay_frequency: str = "weekly"
+    target_buffer: float = 25000.0
     minimum_cash_reserve: float
     minimum_buffer_floor: float
     essential_weekly_expenses: float

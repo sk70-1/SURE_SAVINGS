@@ -19,16 +19,15 @@ export function getApiBaseUrl(): string {
     return base;
   }
 
-  // When running in the browser:
+  // When running in the browser on cloud (Render, Vercel, or remote domain):
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    // If running on Render, dynamically match the exact backend hostname (e.g. sure-savings-web-pss8 -> sure-savings-api-pss8)
-    if (host.includes("onrender.com")) {
-      const apiHost = host.replace("sure-savings-web", "sure-savings-api");
-      return `https://${apiHost}/api/v1`;
-    }
-    if (host !== "localhost" && host !== "127.0.0.1") {
-      return `${window.location.origin}/api/v1`;
+    if (
+      host.includes("onrender.com") ||
+      host.includes("vercel.app") ||
+      (host !== "localhost" && host !== "127.0.0.1")
+    ) {
+      return "https://sure-savings-api.onrender.com/api/v1";
     }
   }
 

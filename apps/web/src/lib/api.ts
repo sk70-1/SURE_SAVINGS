@@ -10,6 +10,10 @@ export function getApiBaseUrl(): string {
   // If explicitly configured with non-localhost URL:
   if (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes("localhost")) {
     let base = process.env.NEXT_PUBLIC_API_URL.trim();
+    // Render fromService sets internal hostname without TLD (e.g. "sure-savings-api-ll73")
+    if (!base.includes(".")) {
+      base = `${base}.onrender.com`;
+    }
     if (!base.startsWith("http://") && !base.startsWith("https://")) {
       base = `https://${base}`;
     }
@@ -27,7 +31,7 @@ export function getApiBaseUrl(): string {
       host.includes("vercel.app") ||
       (host !== "localhost" && host !== "127.0.0.1")
     ) {
-      return "https://sure-savings-api.onrender.com/api/v1";
+      return "https://sure-savings-api-ll73.onrender.com/api/v1";
     }
   }
 

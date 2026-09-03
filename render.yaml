@@ -33,10 +33,7 @@ services:
       - key: NODE_VERSION
         value: 20.14.0
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: sure-savings-api
-          property: host
+        value: https://sure-savings-api-ll73.onrender.com/api/v1
 
 databases:
   # 3. Managed PostgreSQL Database

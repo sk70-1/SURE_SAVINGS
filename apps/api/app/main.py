@@ -6,13 +6,27 @@ from app.api.v1.api import api_router
 from app.schemas.schemas import HealthOut
 from app.models.models import User
 
-# Ensure database tables are created
-Base.metadata.create_all(bind=engine)
+from contextlib import asynccontextmanager
+import time
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Resilient database connection on cloud container startup
+    for attempt in range(5):
+        try:
+            Base.metadata.create_all(bind=engine)
+            print("Database connected and schema initialized successfully.")
+            break
+        except Exception as e:
+            print(f"Database connection attempt {attempt + 1}/5: {e}")
+            time.sleep(2)
+    yield
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="Deterministic Financial Intelligence and Safe Reserve Engine for Irregular Earners."
+    description="Deterministic Financial Intelligence and Safe Reserve Engine for Irregular Earners.",
+    lifespan=lifespan
 )
 
 # CORS Configuration

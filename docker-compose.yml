@@ -3,12 +3,12 @@ version: '3.8'
 services:
   db:
     image: postgres:16-alpine
-    container_name: smart_buffer_db
+    container_name: sure_savings_db
     restart: always
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: smart_income_buffer
+      POSTGRES_DB: sure_savings
     ports:
       - "5432:5432"
     volumes:
@@ -23,13 +23,14 @@ services:
     build:
       context: ./apps/api
       dockerfile: Dockerfile
-    container_name: smart_buffer_api
+    container_name: sure_savings_api
     restart: always
     environment:
       - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/smart_income_buffer
-      - SECRET_KEY=prod_super_secret_smart_income_buffer_key
-      - CORS_ORIGINS=http://localhost:3000
+      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/sure_savings
+      - SECRET_KEY=prod_super_secret_sure_savings_key_change_via_env
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:3001
+      - DEMO_MODE_ENABLED=true
     ports:
       - "8000:8000"
     depends_on:
@@ -40,12 +41,12 @@ services:
     build:
       context: ./apps/web
       dockerfile: Dockerfile
-    container_name: smart_buffer_web
+    container_name: sure_savings_web
     restart: always
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
     ports:
-      - "3000:3000"
+      - "3001:3001"
     depends_on:
       - api
 

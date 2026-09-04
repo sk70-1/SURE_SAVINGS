@@ -89,12 +89,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               />
             </div>
 
-            {/* Desktop / Tablet View: Official Full Logo Banner */}
-            <div className="hidden sm:flex items-center h-10 px-2.5 py-1 bg-[#050b14] rounded-xl border border-slate-800 shadow-sm group-hover:border-emerald-500/50 group-hover:shadow-md transition-all">
+            {/* Desktop / Tablet View: Official Full Transparent Logo Banner */}
+            <div className="hidden sm:flex items-center h-10 py-0.5">
               <img
                 src="/logo.png"
                 alt="Sure-Savings - Smarter Money. Safer Tomorrow."
-                className="h-7 w-auto object-contain group-hover:scale-[1.02] transition-transform"
+                className="h-9 w-auto object-contain group-hover:scale-[1.02] transition-transform"
               />
             </div>
           </Link>

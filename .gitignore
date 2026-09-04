@@ -29,6 +29,11 @@ venv.bak/
 *.db
 smart_buffer.db
 apps/api/smart_buffer.db
+database/backups/*.db
+
+# Temporary uploads & data exports
+*.csv
+!apps/api/tests/fixtures/*.csv
 
 # Environment variables & secrets
 .env

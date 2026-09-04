@@ -10,8 +10,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 from app.main import app
 from app.api.deps import get_db
 from app.core.database import Base
-from app.core.security import create_access_token, hash_password
-from app.models.models import User, FinancialProfile, BufferAccount, Transaction
 
 from sqlalchemy.pool import StaticPool
 

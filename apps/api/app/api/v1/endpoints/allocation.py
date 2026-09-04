@@ -8,7 +8,7 @@ import json
 from app.api.deps import get_db, get_current_user
 from app.models.models import (
     User, FinancialProfile, BufferAccount, BufferTransaction,
-    Transaction, ResilienceScore, AuditLog, Notification,
+    Transaction, AuditLog, Notification,
     MoneyAllocationPlan, FinancialGoal
 )
 from app.schemas.schemas import (

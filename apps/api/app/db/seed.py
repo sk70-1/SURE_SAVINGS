@@ -3,7 +3,6 @@ Database Seeder for Smart Income Buffer.
 Initializes tables and seeds the 5 canonical personas with realistic transaction history.
 """
 
-from datetime import datetime, timezone
 import sys
 import os
 
@@ -21,7 +20,7 @@ from app.core.security import hash_password
 from app.models.models import (
     User, FinancialProfile, Transaction, BufferAccount,
     BufferTransaction, ResilienceScore, Recommendation, Notification, AuditLog,
-    MoneyAllocationPlan, FinancialGoal, ScheduledObligation
+    FinancialGoal, ScheduledObligation
 )
 from app.engine.financial_engine import FinancialEngine
 from app.engine.forecast_engine import ForecastEngine

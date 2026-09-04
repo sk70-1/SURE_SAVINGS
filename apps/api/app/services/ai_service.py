@@ -6,9 +6,7 @@ STRICT BOUNDARY:
 - Strictly rejects any command to execute transactions, move funds, or calculate arbitrary figures.
 """
 
-from typing import Dict, Any, List
-import json
-from app.core.config import settings
+from typing import Dict, Any, List, Optional
 
 
 SYSTEM_INSTRUCTION = """

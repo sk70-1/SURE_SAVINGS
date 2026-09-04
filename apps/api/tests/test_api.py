@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from app.main import app
-from app.core.database import Base, engine, SessionLocal
+from app.core.database import Base, engine
 from app.core.config import settings
 from app.db.seed import seed_database
 

@@ -2,7 +2,6 @@ import pytest
 import sys
 import os
 from decimal import Decimal
-from datetime import datetime, timedelta, timezone
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -15,13 +14,12 @@ from app.core.config import Settings, settings
 from app.core.database import Base
 from app.api.deps import get_db
 from app.core.security import (
-    hash_password, verify_password, verify_and_update_password,
+    hash_password, verify_password,
     validate_password_strength, _legacy_sha256_hash, create_access_token,
     create_refresh_token
 )
 from app.models.models import User, FinancialProfile, BufferAccount, MoneyAllocationPlan, RefreshToken
 from app.engine.financial_engine import FinancialEngine
-from app.engine.money_allocation_service import MoneyAllocationService
 
 # Isolated in-memory database fixture
 TEST_DB_URL = "sqlite:///:memory:"

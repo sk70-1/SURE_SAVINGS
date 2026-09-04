@@ -1,8 +1,8 @@
-from typing import List, Dict, Any
+from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.api.deps import get_db, get_current_user
-from app.models.models import User, Transaction, FinancialProfile
+from app.models.models import User, Transaction
 from app.schemas.schemas import IncomeSummaryOut, IncomeAnalyticsOut, IncomeForecastOut
 from app.engine.financial_engine import FinancialEngine
 from app.engine.forecast_engine import ForecastEngine

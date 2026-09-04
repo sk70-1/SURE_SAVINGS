@@ -5,7 +5,7 @@ financial categories and detects essential vs discretionary spending.
 """
 
 import re
-from typing import Dict, Any, Optional, Tuple
+from typing import Dict, Any, Optional
 
 
 class CategorizationEngine:

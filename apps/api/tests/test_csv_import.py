@@ -16,7 +16,6 @@ from app.core.database import Base
 from app.core.security import create_access_token, hash_password
 from app.models.models import User, Transaction
 from app.engine.categorization_engine import CategorizationEngine
-from app.services.csv_parser_service import CsvParserService
 
 # In-memory SQLite database
 TEST_DB_URL = "sqlite:///:memory:"

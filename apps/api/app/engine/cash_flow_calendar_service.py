@@ -4,7 +4,7 @@ Computes calendar projections, recurrence expansions, running balances,
 risk days, intraday cash pressure, and safe buffer availability.
 """
 
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from datetime import date, datetime, timedelta, timezone
 import calendar
 from typing import List, Dict, Any, Optional
@@ -13,6 +13,7 @@ from app.models.models import (
     User, FinancialProfile, BufferAccount, Transaction, ScheduledObligation
 )
 from app.engine.forecast_engine import ForecastEngine
+from app.engine.financial_engine import FinancialEngine
 
 
 class CashFlowCalendarService:
@@ -20,7 +21,7 @@ class CashFlowCalendarService:
     def to_decimal(val: Any) -> Decimal:
         if val is None:
             return Decimal("0.00")
-        return Decimal(str(val)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        return FinancialEngine.round_money(val)
 
     @staticmethod
     def expand_obligations_for_month(

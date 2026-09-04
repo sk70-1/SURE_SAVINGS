@@ -8,7 +8,7 @@ import io
 import re
 import hashlib
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional
 from sqlalchemy.orm import Session
 
 from app.models.models import Transaction, User

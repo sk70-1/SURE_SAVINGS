@@ -69,7 +69,7 @@ $$\text{Data} \longrightarrow \text{Intelligence} \longrightarrow \text{Predicti
 ```
 
 ### The Non-Negotiable AI Boundary
-1. **Deterministic Calculations Only**: All financial math (surplus, safe-to-save, buffer limits, resilience) is computed in pure Python using NumPy/Pandas.
+1. **Deterministic Calculations Only**: All financial math (surplus, safe-to-save, buffer limits, resilience, money allocation) is computed in pure Python using exact Decimal arithmetic (`ROUND_HALF_UP`) and robust statistics, with zero dependencies on opaque numerical packages.
 2. **AI Never Executes Money Movement**: The LLM has zero execution rights and zero write privileges to the ledger.
 3. **Strict Grounding**: The LLM is supplied only read-only, backend-vetted summary facts (`get_financial_summary()`, `get_buffer_status()`). It is barred from hallucinating balances, fabricating transaction history, or approving credit.
 
@@ -95,10 +95,12 @@ $$\text{Data} \longrightarrow \text{Intelligence} \longrightarrow \text{Predicti
 
 - **Automated Volatility Smoothing**: Replaces rigid monthly budgeting with dynamic baseline tracking.
 - **Protected Smart Buffer with Reserve Floor**: Configurable minimum floors prevent emergency reserves from being completely drained.
+- **Money Allocation Autopilot**: Deterministic 6-tier prioritization (Essentials, Buffer, Obligations, Recovery, Goals, Flexible Spending) with real-time UI simulation.
+- **Cash Flow Calendar & Scheduled Obligations**: Forward-looking daily cash pressure projections, intraday liquidity timelines, and recurring bill tracking.
+- **Multi-Format CSV Ingestion**: Fast preview, deduplication, and automated category tagging for bank and UPI statements.
 - **Multi-Persona Synthetic Generator**: Pre-loaded profiles (Stable, Moderately Volatile, Extreme Gig Volatility, Declining Trend, High Fixed Expenses).
-- **Proactive Distress Early Warning**: Identifies multi-week persistent decline vs. temporary one-off dips.
 - **Explainable Recommendation Feed**: Every suggestion (`SAVE_SURPLUS`, `HOLD_CASH`, `PROTECT_BUFFER`, `USE_BUFFER`) comes with explicit **What**, **Why**, **Impact**, **Priority**, and **Confidence**.
-- **Audited Simulation Sandbox**: Safe sandbox enabling users to simulate deposits and withdrawals before committing real funds.
+- **Production Hardened**: Dual-token JWT auth with HttpOnly refresh cookies, bcrypt hashing, composite database indexes, and cross-user data isolation.
 
 ---
 
@@ -109,32 +111,33 @@ smart-income-buffer/
 ├── apps/
 │   ├── web/                    # Next.js 14+ App Router Frontend
 │   │   ├── src/
-│   │   │   ├── app/            # Pages & Routes (Dashboard, Buffer, Transactions, Settings)
-│   │   │   ├── components/     # UI Component Library & Chart Visualizations
-│   │   │   └── lib/            # API Client, State, Types
+│   │   │   ├── app/            # Pages & Routes (Dashboard, Calendar)
+│   │   │   ├── components/     # UI Component Library (Modals, Cards, Charts, Calendar)
+│   │   │   └── lib/            # API Client, State, Formatters, Types, Utilities
 │   │   └── package.json
 │   │
 │   └── api/                    # FastAPI Backend Application
 │       ├── app/
-│       │   ├── api/            # Route Controllers (/auth, /income, /buffer, /ai, etc.)
-│       │   ├── core/           # Config, Security (JWT), Database Connection
-│       │   ├── engine/         # Deterministic Engines (Financial, Resilience, Rules)
+│       │   ├── api/            # Route Controllers (/auth, /income, /buffer, /allocation, /calendar, /obligations, /ai, etc.)
+│       │   ├── core/           # Config, Security (JWT & Bcrypt), Database Connection
+│       │   ├── engine/         # Deterministic Engines (Financial, Forecast, Allocation, Calendar, Categorization)
 │       │   ├── models/         # SQLAlchemy ORM Data Models
 │       │   ├── schemas/        # Pydantic Schemas & Validation Contracts
-│       │   └── services/       # AI Explanation, Forecast, Ingestion Services
-│       ├── tests/              # Backend Unit & Integration Tests
+│       │   └── services/       # AI Explanation, CSV Parser Services
+│       ├── migrations/         # Alembic database migration scripts
+│       ├── tests/              # Backend Unit & Integration Tests (61+ test cases)
 │       └── requirements.txt
 │
-├── ml/
-│   ├── datasets/               # Pre-generated synthetic persona datasets (CSV/JSON)
-│   ├── features/               # Feature engineering scripts
-│   └── inference/              # Prophet & Fallback statistical models
-│
 ├── database/
-│   ├── migrations/             # Alembic migration scripts
+│   ├── backups/                # Archived database copies
 │   └── seeds/                  # Seed generators for synthetic profiles
 │
+├── scripts/
+│   ├── migrate_db.py           # Standalone schema sync & migration script
+│   └── start_dev.bat           # Windows quickstart launcher
+│
 ├── docker-compose.yml          # Local orchestration (FastAPI + PostgreSQL + Next.js)
+├── render.yaml                 # Cloud deployment configuration (Render)
 ├── .env.example                # Canonical environment variables
 └── README.md                   # Project documentation
 ```
@@ -164,25 +167,46 @@ smart-income-buffer/
 
 | Domain | Method | Endpoint | Description |
 | :--- | :--- | :--- | :--- |
-| **Auth** | `POST` | `/api/v1/auth/register` | Register new user |
-| | `POST` | `/api/v1/auth/login` | Authenticate & retrieve JWT |
-| **User** | `GET` | `/api/v1/users/me` | Current profile & preferences |
+| **Auth** | `POST` | `/api/v1/auth/register` | Register new user with strong password |
+| | `POST` | `/api/v1/auth/login` | Authenticate, return access token & set refresh cookie |
+| | `POST` | `/api/v1/auth/refresh` | Rotate refresh token and issue new access token |
+| | `POST` | `/api/v1/auth/logout` | Revoke active refresh token and clear cookie |
+| | `GET` | `/api/v1/auth/me` | Current authenticated user |
+| | `POST` | `/api/v1/auth/onboarding` | Complete initial financial parameters and buffer target |
+| **Users** | `GET` | `/api/v1/users/profile` | Financial profile details |
+| | `PUT` | `/api/v1/users/profile` | Update financial parameters |
+| | `GET` | `/api/v1/users/personas` | Pre-seeded synthetic profiles (demo mode only) |
 | **Transactions** | `GET` | `/api/v1/transactions` | Paginated transaction ledger |
 | | `POST` | `/api/v1/transactions` | Create manual transaction |
-| | `POST` | `/api/v1/transactions/import` | Ingest CSV bank/gig statements |
+| | `DELETE` | `/api/v1/transactions/{id}` | Delete transaction |
+| | `GET` | `/api/v1/transactions/categories` | Metadata for standard financial categories |
+| | `POST` | `/api/v1/transactions/import/preview` | Upload and preview CSV statement with deduplication |
+| | `POST` | `/api/v1/transactions/import/confirm` | Confirm batch ingestion into ledger |
 | **Income** | `GET` | `/api/v1/income/summary` | Aggregated totals, averages, and trend |
 | | `GET` | `/api/v1/income/analytics` | Volatility ($CV$), stabilized baseline |
-| | `GET` | `/api/v1/income/forecast` | ML/Statistical next-cycle projection |
+| | `GET` | `/api/v1/income/forecast` | Next-cycle statistical income forecast |
 | **Buffer** | `GET` | `/api/v1/buffer` | Current balance, target, minimum floor |
 | | `GET` | `/api/v1/buffer/history` | Audit log of buffer movements |
-| | `POST` | `/api/v1/buffer/contribute` | Deposit into buffer (simulated) |
-| | `POST` | `/api/v1/buffer/withdraw` | Withdraw from buffer (floor-protected) |
+| | `POST` | `/api/v1/buffer/simulate` | Simulate deposit or floor-protected withdrawal |
 | **Resilience** | `GET` | `/api/v1/resilience/score` | 0–100 composite score breakdown |
 | **Recommendations**| `GET` | `/api/v1/recommendations` | Active prioritized financial advice |
-| | `POST` | `/api/v1/recommendations/{id}/approve`| Approve & trigger simulated action |
-| | `POST` | `/api/v1/recommendations/{id}/dismiss`| Dismiss recommendation |
+| | `POST` | `/api/v1/recommendations/{id}/approve` | Approve & trigger simulated action |
+| | `POST` | `/api/v1/recommendations/{id}/dismiss` | Dismiss recommendation |
+| **Allocation** | `GET` | `/api/v1/allocation/current` | Active 6-tier money allocation recommendation |
+| | `POST` | `/api/v1/allocation/simulate` | Interactive slider simulation with resilience projection |
+| | `POST` | `/api/v1/allocation/{id}/approve` | User-approved allocation execution |
+| | `POST` | `/api/v1/allocation/{id}/dismiss` | Dismiss allocation recommendation |
+| | `GET` | `/api/v1/allocation/history` | Historical approved allocation plans |
+| | `GET` | `/api/v1/allocation/goals` | User financial goals |
+| **Calendar** | `GET` | `/api/v1/calendar/month` | Monthly cash flow projection and risk analysis |
+| | `GET` | `/api/v1/calendar/day` | Detailed intraday inspector breakdown |
+| **Obligations** | `GET` | `/api/v1/obligations` | List user scheduled bills and obligations |
+| | `POST` | `/api/v1/obligations` | Create scheduled recurring obligation |
+| | `PATCH` | `/api/v1/obligations/{id}` | Update obligation parameters |
+| | `DELETE` | `/api/v1/obligations/{id}` | Delete obligation |
 | **AI** | `POST` | `/api/v1/ai/chat` | Grounded AI explanation query |
 | **Health** | `GET` | `/api/v1/health` | System and DB health status |
+
 
 ---
 

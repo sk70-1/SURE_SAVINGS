@@ -7,7 +7,6 @@ empirical variance confidence bands, and fallback algorithms.
 from typing import List, Dict, Any
 from datetime import datetime, timedelta, timezone
 import statistics
-import math
 
 
 class ForecastEngine:

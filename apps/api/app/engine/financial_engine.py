@@ -6,7 +6,6 @@ execute with exact Decimal precision and ROUND_HALF_UP rounding.
 
 from typing import List, Dict, Any, Optional, Union
 from decimal import Decimal, ROUND_HALF_UP
-import math
 import statistics
 
 

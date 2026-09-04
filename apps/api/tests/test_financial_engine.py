@@ -1,4 +1,3 @@
-import pytest
 import sys
 import os
 
@@ -7,7 +6,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.engine.financial_engine import FinancialEngine
 from app.engine.forecast_engine import ForecastEngine
-from app.engine.recommendation_engine import RecommendationEngine
 
 
 def test_stabilized_income_canonical_formula():

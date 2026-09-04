@@ -13,20 +13,17 @@ Recommendation-first: All real money movement remains strictly simulated
 and requires explicit user approval in the UI.
 """
 
-from typing import Dict, Any, List, Optional, Union
-from decimal import Decimal, ROUND_HALF_UP
-import json
+from typing import Dict, Any, List, Union
+from decimal import Decimal
 from app.engine.financial_engine import FinancialEngine
 
 
 def _to_dec(val: Any) -> Decimal:
-    if isinstance(val, Decimal):
-        return val
-    return Decimal(str(val))
+    return FinancialEngine.to_decimal(val)
 
 
-def _round_2(val: Decimal) -> float:
-    return float(val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
+def _round_2(val: Any) -> float:
+    return float(FinancialEngine.round_money(val))
 
 
 class MoneyAllocationService:

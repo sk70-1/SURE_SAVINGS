@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator, ConfigDict
 
 
 # --- Auth & User ---
@@ -53,8 +53,7 @@ class UserOut(BaseModel):
     country: str = "India"
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Onboarding & Financial Profile ---
@@ -98,8 +97,7 @@ class FinancialProfileOut(BaseModel):
     essential_weekly_expenses: float
     policy_limit_ratio: float
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Transactions ---
@@ -124,8 +122,7 @@ class TransactionOut(BaseModel):
     source: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Income & Analytics ---
@@ -180,8 +177,7 @@ class BufferTransactionOut(BaseModel):
     notes: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BufferSimulateAction(BaseModel):
@@ -222,12 +218,7 @@ class RecommendationOut(BaseModel):
     status: str
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
-
-class RecommendationAction(BaseModel):
-    action: str = Field(..., pattern="^(APPROVE|DISMISS)$")
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Notifications ---
@@ -239,8 +230,7 @@ class NotificationOut(BaseModel):
     is_read: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- AI Chat ---
@@ -286,8 +276,7 @@ class AllocationPlanOut(BaseModel):
     created_at: datetime
     approved_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AllocationSimulateIn(BaseModel):
@@ -330,8 +319,7 @@ class FinancialGoalOut(BaseModel):
     priority: int
     is_completed: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # --- Scheduled Obligations & Cash Flow Calendar ---
@@ -373,8 +361,7 @@ class ScheduledObligationOut(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CalendarEventOut(BaseModel):

@@ -7,6 +7,19 @@ export interface UserProfile {
   persona_type?: string;
 }
 
+export interface FinancialProfile {
+  id: number;
+  user_id: number;
+  persona_name: string;
+  persona_type: string;
+  pay_frequency: string;
+  target_buffer: number;
+  minimum_cash_reserve: number;
+  minimum_buffer_floor: number;
+  essential_weekly_expenses: number;
+  policy_limit_ratio: number;
+}
+
 export interface PersonaOption {
   id: number;
   email: string;

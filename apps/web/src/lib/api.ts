@@ -1,5 +1,5 @@
 import {
-  UserProfile, PersonaOption, IncomeAnalytics, IncomeForecast,
+  UserProfile, FinancialProfile, PersonaOption, IncomeAnalytics, IncomeForecast,
   BufferStatus, BufferTransaction, ResilienceScore,
   Recommendation, Transaction, NotificationItem, AiExplanationResponse,
   AllocationPlan, AllocationSimulationResult, AllocationSimulateRequest, AllocationApproveRequest, FinancialGoal,
@@ -205,7 +205,7 @@ export const api = {
   getMe: () => fetchApi<AuthUser>("/auth/me"),
 
   completeOnboarding: (data: OnboardingPayload) =>
-    fetchApi<any>("/auth/onboarding", {
+    fetchApi<FinancialProfile>("/auth/onboarding", {
       method: "POST",
       body: JSON.stringify(data),
     }),
@@ -316,11 +316,6 @@ export const api = {
   getFinancialGoals: () => fetchApi<FinancialGoal[]>("/allocation/goals"),
 
   // --- AI Explainer ---
-  askAi: (message: string) =>
-    fetchApi<AiExplanationResponse>("/ai/chat", {
-      method: "POST",
-      body: JSON.stringify({ message }),
-    }),
   chatWithAi: (message: string) =>
     fetchApi<AiExplanationResponse>("/ai/chat", {
       method: "POST",

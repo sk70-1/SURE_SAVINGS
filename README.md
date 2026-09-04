@@ -2,11 +2,21 @@
 
 > **Intelligent Cash Flow Stabilization & Reserve Management Platform for Irregular Earners and Gig Workers**
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://sure-savings-web-pss8.onrender.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
 [![Next.js](https://img.shields.io/badge/Next.js-14+-black?style=flat&logo=next.js&logoColor=white)](https://nextjs.org)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16+-336791?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-3.4+-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com)
+
+---
+
+### 🌐 Live Production Deployment
+
+- **🚀 Live Web Application**: [https://sure-savings-web-pss8.onrender.com/](https://sure-savings-web-pss8.onrender.com/)
+- **⚡ Backend API**: [https://sure-savings-api-ll73.onrender.com](https://sure-savings-api-ll73.onrender.com)
+- **📖 Interactive API Docs (Swagger UI)**: [https://sure-savings-api-ll73.onrender.com/docs](https://sure-savings-api-ll73.onrender.com/docs)
+- **👥 Demo Access**: 1-click persona switching enabled on login (Gig Delivery Rider, Freelance Designer, Rideshare Driver).
 
 ---
 

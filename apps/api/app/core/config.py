@@ -34,8 +34,9 @@ class Settings(BaseSettings):
     PORT: int = 8000
     HOST: str = "0.0.0.0"
 
-    # CORS: Explicitly allow Next.js on 3000 & 3001
+    # CORS: Explicitly allow Next.js on 3000 & 3001 and Render production domains
     CORS_ORIGINS: str = (
+        "https://sure-savings-web-pss8.onrender.com,https://sure-savings-web.onrender.com,"
         "http://localhost:3000,http://127.0.0.1:3000,"
         "http://localhost:3001,http://127.0.0.1:3001,"
         "http://localhost:8000,http://127.0.0.1:8000"

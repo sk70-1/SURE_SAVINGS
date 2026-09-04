@@ -17,7 +17,7 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: "https://sure-savings-web.onrender.com,http://localhost:3000,http://localhost:3001"
+        value: "https://sure-savings-web-pss8.onrender.com,https://sure-savings-web.onrender.com,http://localhost:3000,http://localhost:3001"
       - key: DEMO_MODE_ENABLED
         value: "false"
 

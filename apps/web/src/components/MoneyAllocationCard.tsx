@@ -106,7 +106,9 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
               {formatCurrency(emergencySavings, "INR", locale)}
             </div>
             <p className="text-[11px] text-[#6b7280] mt-1">
-              {t("emergencySavingsDesc")}
+              {emergencySavings === 0
+                ? t("emergencySavingsZeroDesc", { amount: formatCurrency(income, "INR", locale) })
+                : t("emergencySavingsDesc")}
             </p>
           </div>
 
@@ -120,7 +122,7 @@ export const MoneyAllocationCard: React.FC<MoneyAllocationCardProps> = ({
               {formatCurrency(spendingMoney, "INR", locale)}
             </div>
             <p className="text-[11px] text-[#6b7280] mt-1">
-              {t("spendingMoneyDesc")}
+              {spendingMoney === 0 ? t("spendingMoneyZeroDesc") : t("spendingMoneyDesc")}
             </p>
           </div>
         </div>

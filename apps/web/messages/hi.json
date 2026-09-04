@@ -103,7 +103,8 @@
     "covered": "● सुरक्षित",
     "needsAttention": "● ध्यान देने योग्य",
     "noImmediateBills": "इस सप्ताह कोई तत्काल देय बिल नहीं है",
-    "seeAllUpcomingBills": "सभी आगामी बिल देखें"
+    "seeAllUpcomingBills": "सभी आगामी बिल देखें",
+    "zeroStressDailyZero": "ज़रूरी खर्चों के लिए आरक्षित · इस सप्ताह कोई अतिरिक्त खर्च राशि नहीं है"
   },
   "bufferCard": {
     "title": "स्मार्ट इमरजेंसी बफर",
@@ -515,7 +516,9 @@
     "upcomingBills": "आगामी बिल:",
     "flexibleSpending": "लचीला खर्च:",
     "savingsGoals": "बचत लक्ष्य:",
-    "moneySafety": "वित्तीय सुरक्षा:"
+    "moneySafety": "वित्तीय सुरक्षा:",
+    "emergencySavingsZeroDesc": "पूरा {amount} पहले आवश्यक खर्चों के लिए रखा गया है। आवश्यक खर्च पूरे होने के बाद अतिरिक्त बचत यहाँ जुड़ेगी।",
+    "spendingMoneyZeroDesc": "₹0 अतिरिक्त खर्च के लिए। किराया, भोजन और आवश्यक बिलों की सुरक्षा के लिए पूरी राशि रोकी गई है।"
   },
   "upcomingBillsList": {
     "title": "आगामी बिल ({count})",

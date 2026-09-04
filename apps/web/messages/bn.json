@@ -103,7 +103,8 @@
     "covered": "● সুরক্ষিত",
     "needsAttention": "● বিশেষ মনোযোগ প্রয়োজন",
     "noImmediateBills": "এই সপ্তাহে তাৎক্ষণিক কোনো বিল প্রদেয় নেই",
-    "seeAllUpcomingBills": "আসন্ন সমস্ত বিল দেখুন"
+    "seeAllUpcomingBills": "আসন্ন সমস্ত বিল দেখুন",
+    "zeroStressDailyZero": "জরুরি খরচের জন্য সংরক্ষিত · এই সপ্তাহে অতিরিক্ত খরচের টাকা নেই"
   },
   "bufferCard": {
     "title": "স্মার্ট জরুরি বাফার",
@@ -515,7 +516,9 @@
     "upcomingBills": "আসন্ন বিলসমূহ:",
     "flexibleSpending": "নমনীয় হাতখরচ:",
     "savingsGoals": "সঞ্চয় লক্ষ্যমাত্রা:",
-    "moneySafety": "আর্থিক নিরাপত্তা:"
+    "moneySafety": "আর্থিক নিরাপত্তা:",
+    "emergencySavingsZeroDesc": "পুরো {amount} আগে জরুরি খরচের জন্য বরাদ্দ। জরুরি খরচ মিটলে উদ্বৃত্ত টাকা এখানে সঞ্চিত হবে।",
+    "spendingMoneyZeroDesc": "₹০ অতিরিক্ত ব্যয়ের সুযোগ। বাড়ি ভাড়া, খাবার ও প্রয়োজনীয় বিল সুরক্ষায় সমস্ত টাকা সংরক্ষিত।"
   },
   "upcomingBillsList": {
     "title": "আসন্ন বিলসমূহ ({count})",

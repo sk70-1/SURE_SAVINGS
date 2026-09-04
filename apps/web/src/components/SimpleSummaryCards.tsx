@@ -139,9 +139,9 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
           </div>
 
           <div className="mt-3.5 pt-3 border-t border-[#f3f4f6] text-xs text-[#4b5563] space-y-1">
-            <div className="flex items-center space-x-1.5 text-[#059669]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
-              <span className="font-medium">{t("zeroStressDaily")}</span>
+            <div className={`flex items-center space-x-1.5 ${safeToSpend > 0 ? "text-[#059669]" : "text-[#b45309]"}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${safeToSpend > 0 ? "bg-[#059669]" : "bg-[#f59e0b]"}`} />
+              <span className="font-medium">{safeToSpend > 0 ? t("zeroStressDaily") : t("zeroStressDailyZero")}</span>
             </div>
           </div>
         </div>

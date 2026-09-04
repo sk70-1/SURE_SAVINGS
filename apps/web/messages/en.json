@@ -103,7 +103,8 @@
     "covered": "● Covered",
     "needsAttention": "● Needs attention",
     "noImmediateBills": "No immediate bills due this week",
-    "seeAllUpcomingBills": "See all upcoming bills"
+    "seeAllUpcomingBills": "See all upcoming bills",
+    "zeroStressDailyZero": "Reserved for essentials · No extra spending cash this week"
   },
   "bufferCard": {
     "title": "Smart Emergency Buffer",
@@ -515,7 +516,9 @@
     "upcomingBills": "Upcoming Bills:",
     "flexibleSpending": "Flexible Spending:",
     "savingsGoals": "Savings Goals:",
-    "moneySafety": "Money Safety:"
+    "moneySafety": "Money Safety:",
+    "emergencySavingsZeroDesc": "All {amount} needed for essentials first. Extra stash starts once earnings exceed essentials.",
+    "spendingMoneyZeroDesc": "₹0 discretionary cash. All funds held to protect rent, groceries, and essential bills."
   },
   "upcomingBillsList": {
     "title": "Upcoming Bills ({count})",

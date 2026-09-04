@@ -23,6 +23,8 @@ class ForecastEngine:
         if base_date is None:
             base_date = datetime.now(timezone.utc)
 
+        weekly_incomes = [float(x) for x in weekly_incomes if x is not None] if weekly_incomes else []
+
         if not weekly_incomes:
             return {
                 "prediction_date": (base_date + timedelta(days=7)).strftime("%Y-%m-%d"),

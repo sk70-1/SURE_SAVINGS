@@ -8,33 +8,45 @@ Calculates, validates, and simulates recommended allocations across:
 5. Financial Goals
 6. Flexible Spending
 
+All arithmetic executes with exact Decimal precision and ROUND_HALF_UP.
 Recommendation-first: All real money movement remains strictly simulated
 and requires explicit user approval in the UI.
 """
 
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Union
+from decimal import Decimal, ROUND_HALF_UP
 import json
 from app.engine.financial_engine import FinancialEngine
+
+
+def _to_dec(val: Any) -> Decimal:
+    if isinstance(val, Decimal):
+        return val
+    return Decimal(str(val))
+
+
+def _round_2(val: Decimal) -> float:
+    return float(val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP))
 
 
 class MoneyAllocationService:
     @staticmethod
     def calculate_allocation(
-        income_received: float,
-        essential_weekly_expenses: float,
-        current_buffer: float,
-        buffer_target: float,
-        minimum_buffer_floor: float,
-        stabilized_income: float,
+        income_received: Union[float, Decimal],
+        essential_weekly_expenses: Union[float, Decimal],
+        current_buffer: Union[float, Decimal],
+        buffer_target: Union[float, Decimal],
+        minimum_buffer_floor: Union[float, Decimal],
+        stabilized_income: Union[float, Decimal],
         income_volatility_cv: float,
         forecast_confidence: float = 0.90,
-        upcoming_obligations: float = 0.0,
-        active_goal_need: float = 0.0,
-        recent_drawdown_amount: float = 0.0,
+        upcoming_obligations: Union[float, Decimal] = 0.0,
+        active_goal_need: Union[float, Decimal] = 0.0,
+        recent_drawdown_amount: Union[float, Decimal] = 0.0,
         is_income_declining: bool = False
     ) -> Dict[str, Any]:
         """
-        Deterministic prioritization engine for incoming money:
+        Deterministic prioritization engine for incoming money with Decimal precision:
         Priority 1: Essentials
         Priority 2: Protected Buffer
         Priority 3: Upcoming Obligations
@@ -42,20 +54,26 @@ class MoneyAllocationService:
         Priority 5: Financial Goals
         Priority 6: Flexible Spending
         """
-        income = max(0.0, float(income_received))
+        income = max(Decimal("0.00"), _to_dec(income_received))
+        essential_expenses = max(Decimal("0.00"), _to_dec(essential_weekly_expenses))
+        curr_buffer = max(Decimal("0.00"), _to_dec(current_buffer))
+        buf_target = max(Decimal("0.00"), _to_dec(buffer_target))
+        min_floor = max(Decimal("0.00"), _to_dec(minimum_buffer_floor))
+        stab_income = max(Decimal("0.00"), _to_dec(stabilized_income))
+        upcoming_obs = max(Decimal("0.00"), _to_dec(upcoming_obligations))
+        goal_need = max(Decimal("0.00"), _to_dec(active_goal_need))
+        recent_drawdown = max(Decimal("0.00"), _to_dec(recent_drawdown_amount))
+
         remaining = income
 
         # Priority 1: Financial Safety — Essentials
-        # Covers essential food, housing, utilities for the period
-        essential_allocation = min(essential_weekly_expenses, remaining)
-        remaining = max(0.0, remaining - essential_allocation)
+        essential_allocation = min(essential_expenses, remaining)
+        remaining = max(Decimal("0.00"), remaining - essential_allocation)
 
         # Priority 2: Protected Buffer
-        # If buffer is below target, allocate toward emergency cushion
-        buffer_gap = FinancialEngine.calculate_buffer_gap(buffer_target, current_buffer)
-        policy_limit = max(500.0, essential_weekly_expenses * 0.50)  # Safe single-cycle cap
+        buffer_gap = max(Decimal("0.00"), buf_target - curr_buffer)
+        policy_limit = max(Decimal("500.00"), essential_expenses * Decimal("0.50"))
         
-        # Calculate safe buffer portion considering volatility
         safe_save_eval = FinancialEngine.calculate_safe_to_save(
             financial_surplus=remaining,
             buffer_gap=buffer_gap,
@@ -64,69 +82,69 @@ class MoneyAllocationService:
             forecast_confidence=forecast_confidence,
             is_income_declining=is_income_declining
         )
-        buffer_allocation = min(remaining, safe_save_eval["safe_to_save_amount"])
-        remaining = max(0.0, remaining - buffer_allocation)
+        safe_save_amount = _to_dec(safe_save_eval["safe_to_save_amount"])
+        buffer_allocation = min(remaining, safe_save_amount)
+        remaining = max(Decimal("0.00"), remaining - buffer_allocation)
 
-        # Priority 3: Upcoming Mandatory Obligations (e.g. bills/rent due in next 7-10 days)
-        obligation_allocation = min(upcoming_obligations, remaining)
-        remaining = max(0.0, remaining - obligation_allocation)
+        # Priority 3: Upcoming Mandatory Obligations
+        obligation_allocation = min(upcoming_obs, remaining)
+        remaining = max(Decimal("0.00"), remaining - obligation_allocation)
 
         # Priority 4: Recovery
-        # If user recently experienced a buffer drawdown or shortfall, rebuild safety
-        recovery_need = max(0.0, recent_drawdown_amount)
-        if recovery_need > 0 and current_buffer < buffer_target:
-            recovery_allocation = min(remaining, recovery_need, essential_weekly_expenses * 0.30)
-            remaining = max(0.0, remaining - recovery_allocation)
+        recovery_need = max(Decimal("0.00"), recent_drawdown)
+        if recovery_need > Decimal("0.00") and curr_buffer < buf_target:
+            recovery_allocation = min(remaining, recovery_need, essential_expenses * Decimal("0.30"))
+            remaining = max(Decimal("0.00"), remaining - recovery_allocation)
         else:
-            recovery_allocation = 0.0
+            recovery_allocation = Decimal("0.00")
 
         # Priority 5: Financial Goals
-        # Only allocate when essentials are funded and buffer is at or above minimum floor
-        can_fund_goals = (essential_allocation >= (essential_weekly_expenses * 0.80)) and (current_buffer >= minimum_buffer_floor)
-        if can_fund_goals and active_goal_need > 0 and remaining > 0:
-            # Allocate up to 30% of remaining cash or the goal need
-            max_goal_portion = max(100.0, remaining * 0.40)
-            goal_allocation = min(remaining, active_goal_need, max_goal_portion)
-            remaining = max(0.0, remaining - goal_allocation)
+        can_fund_goals = (essential_allocation >= (essential_expenses * Decimal("0.80"))) and (curr_buffer >= min_floor)
+        if can_fund_goals and goal_need > Decimal("0.00") and remaining > Decimal("0.00"):
+            max_goal_portion = max(Decimal("100.00"), remaining * Decimal("0.40"))
+            goal_allocation = min(remaining, goal_need, max_goal_portion)
+            remaining = max(Decimal("0.00"), remaining - goal_allocation)
         else:
-            goal_allocation = 0.0
+            goal_allocation = Decimal("0.00")
 
         # Priority 6: Flexible / Discretionary Spending
-        # Only discretionary money after safety-related categories have been satisfied
-        # If income is severely below stabilized baseline (< 60%), hold or minimize flexible
-        is_severely_low = income < (stabilized_income * 0.60) if stabilized_income > 0 else False
+        is_severely_low = income < (stab_income * Decimal("0.60")) if stab_income > Decimal("0.00") else False
         if is_severely_low:
-            # Re-route remaining into buffer or obligations for safety
             extra_buffer = min(remaining, buffer_gap)
             buffer_allocation += extra_buffer
-            remaining = max(0.0, remaining - extra_buffer)
+            remaining = max(Decimal("0.00"), remaining - extra_buffer)
             flexible_allocation = remaining
         else:
             flexible_allocation = remaining
 
-        # Round all values to 2 decimal places
+        # Round all values to 2 decimal places using ROUND_HALF_UP
+        ess_f = _round_2(essential_allocation)
+        buf_f = _round_2(buffer_allocation)
+        obl_f = _round_2(obligation_allocation)
+        rec_f = _round_2(recovery_allocation)
+        gol_f = _round_2(goal_allocation)
+        flx_f = _round_2(flexible_allocation)
+        total_f = round(ess_f + buf_f + obl_f + rec_f + gol_f + flx_f, 2)
+
         allocations = {
-            "essentials": round(essential_allocation, 2),
-            "protected_buffer": round(buffer_allocation, 2),
-            "upcoming_obligations": round(obligation_allocation, 2),
-            "recovery": round(recovery_allocation, 2),
-            "goals": round(goal_allocation, 2),
-            "flexible_spending": round(flexible_allocation, 2),
-            "total": round(
-                essential_allocation + buffer_allocation + obligation_allocation +
-                recovery_allocation + goal_allocation + flexible_allocation, 2
-            )
+            "essentials": ess_f,
+            "protected_buffer": buf_f,
+            "upcoming_obligations": obl_f,
+            "recovery": rec_f,
+            "goals": gol_f,
+            "flexible_spending": flx_f,
+            "total": total_f
         }
 
         # Build clear, explainable reasoning for each category
         reasons = {
             "essentials": (
                 f"₹{allocations['essentials']:,.0f} reserved for essential food, housing, and bills "
-                f"based on your ₹{essential_weekly_expenses:,.0f}/wk baseline."
+                f"based on your ₹{float(essential_expenses):,.0f}/wk baseline."
             ),
             "protected_buffer": (
                 f"₹{allocations['protected_buffer']:,.0f} allocated to emergency savings. "
-                f"Current cushion is ₹{current_buffer:,.0f} towards your ₹{buffer_target:,.0f} goal."
+                f"Current cushion is ₹{float(curr_buffer):,.0f} towards your ₹{float(buf_target):,.0f} goal."
             ),
             "upcoming_obligations": (
                 f"₹{allocations['upcoming_obligations']:,.0f} earmarked for upcoming scheduled bills "
@@ -154,96 +172,97 @@ class MoneyAllocationService:
         }
 
         return {
-            "income_received": income,
+            "income_received": float(income),
             "breakdown": allocations,
             "reasons": reasons,
-            "buffer_gap": buffer_gap,
-            "policy_limit": policy_limit,
+            "buffer_gap": float(buffer_gap),
+            "policy_limit": float(policy_limit),
             "is_severely_low": is_severely_low
         }
 
     @staticmethod
     def validate_and_simulate(
-        proposed_breakdown: Dict[str, float],
-        income_received: float,
-        current_buffer: float,
-        buffer_target: float,
-        minimum_buffer_floor: float,
-        essential_weekly_expenses: float,
+        proposed_breakdown: Dict[str, Any],
+        income_received: Union[float, Decimal],
+        current_buffer: Union[float, Decimal],
+        buffer_target: Union[float, Decimal],
+        minimum_buffer_floor: Union[float, Decimal],
+        essential_weekly_expenses: Union[float, Decimal],
         income_volatility_cv: float,
         current_resilience: float,
-        goal_target: float = 0.0,
-        current_goal_amount: float = 0.0
+        goal_target: Union[float, Decimal] = 0.0,
+        current_goal_amount: Union[float, Decimal] = 0.0
     ) -> Dict[str, Any]:
         """
-        Validates a proposed allocation (recommended or user-customized)
-        against strict financial safety rules and simulates projected state.
+        Validates a proposed allocation against strict financial safety rules
+        and simulates projected state using exact Decimal arithmetic.
         """
-        raw_values = {
-            "essentials": float(proposed_breakdown.get("essentials", 0.0)),
-            "protected_buffer": float(proposed_breakdown.get("protected_buffer", 0.0)),
-            "upcoming_obligations": float(proposed_breakdown.get("upcoming_obligations", 0.0)),
-            "recovery": float(proposed_breakdown.get("recovery", 0.0)),
-            "goals": float(proposed_breakdown.get("goals", 0.0)),
-            "flexible_spending": float(proposed_breakdown.get("flexible_spending", 0.0))
+        dec_vals = {
+            "essentials": _to_dec(proposed_breakdown.get("essentials", 0.0)),
+            "protected_buffer": _to_dec(proposed_breakdown.get("protected_buffer", 0.0)),
+            "upcoming_obligations": _to_dec(proposed_breakdown.get("upcoming_obligations", 0.0)),
+            "recovery": _to_dec(proposed_breakdown.get("recovery", 0.0)),
+            "goals": _to_dec(proposed_breakdown.get("goals", 0.0)),
+            "flexible_spending": _to_dec(proposed_breakdown.get("flexible_spending", 0.0))
         }
 
         warnings: List[str] = []
         is_safe = True
         risk_level = "SAFE"
 
-        # Rule 2: Check negative values
-        for cat, val in raw_values.items():
-            if val < 0:
+        # Check negative values
+        for cat, val in dec_vals.items():
+            if val < Decimal("0.00"):
                 is_safe = False
                 risk_level = "UNSAFE"
-                warnings.append(f"Category '{cat}' cannot be negative (got ₹{val:,.2f}).")
+                warnings.append(f"Category '{cat}' cannot be negative (got ₹{float(val):,.2f}).")
 
-        essentials = max(0.0, raw_values["essentials"])
-        buffer_amt = max(0.0, raw_values["protected_buffer"])
-        obligations = max(0.0, raw_values["upcoming_obligations"])
-        recovery = max(0.0, raw_values["recovery"])
-        goals = max(0.0, raw_values["goals"])
-        flexible = max(0.0, raw_values["flexible_spending"])
+        essentials = max(Decimal("0.00"), dec_vals["essentials"])
+        buffer_amt = max(Decimal("0.00"), dec_vals["protected_buffer"])
+        obligations = max(Decimal("0.00"), dec_vals["upcoming_obligations"])
+        recovery = max(Decimal("0.00"), dec_vals["recovery"])
+        goals = max(Decimal("0.00"), dec_vals["goals"])
+        flexible = max(Decimal("0.00"), dec_vals["flexible_spending"])
 
-        total_proposed = round(
-            raw_values["essentials"] + raw_values["protected_buffer"] + raw_values["upcoming_obligations"] +
-            raw_values["recovery"] + raw_values["goals"] + raw_values["flexible_spending"], 2
-        )
-        income = round(float(income_received), 2)
+        total_dec = essentials + buffer_amt + obligations + recovery + goals + flexible
+        total_proposed = _round_2(total_dec)
+        dec_income = _to_dec(income_received)
+        income_f = _round_2(dec_income)
 
-        # Rule 1: Sum cannot exceed income received (tolerance 0.05 for float rounding)
-        if total_proposed > (income + 0.05):
+        # Rule 1: Sum cannot exceed income received (tolerance 0.01 for rounding)
+        if total_dec > (dec_income + Decimal("0.01")):
             is_safe = False
             risk_level = "UNSAFE"
+            diff = float(total_dec - dec_income)
             warnings.append(
-                f"Total allocation (₹{total_proposed:,.2f}) exceeds received income (₹{income:,.2f}) by ₹{total_proposed - income:,.2f}."
+                f"Total allocation (₹{total_proposed:,.2f}) exceeds received income (₹{income_f:,.2f}) by ₹{diff:,.2f}."
             )
 
         # Rule 3: Protected Floor Breach Check
-        projected_buffer = round(current_buffer + buffer_amt + recovery, 2)
-        if projected_buffer < minimum_buffer_floor:
+        dec_curr_buf = _to_dec(current_buffer)
+        dec_min_floor = _to_dec(minimum_buffer_floor)
+        projected_buffer_dec = dec_curr_buf + buffer_amt + recovery
+        projected_buffer = _round_2(projected_buffer_dec)
+
+        if projected_buffer_dec < dec_min_floor:
             is_safe = False
             risk_level = "UNSAFE"
             warnings.append(
-                f"Projected buffer (₹{projected_buffer:,.0f}) breaches the untouchable minimum floor of ₹{minimum_buffer_floor:,.0f}."
+                f"Projected buffer (₹{projected_buffer:,.0f}) breaches the untouchable minimum floor of ₹{float(dec_min_floor):,.0f}."
             )
 
         # Rule 4: Essential coverage check
-        if essentials < (essential_weekly_expenses * 0.50) and flexible > (income * 0.25):
+        dec_ess_exp = _to_dec(essential_weekly_expenses)
+        if essentials < (dec_ess_exp * Decimal("0.50")) and flexible > (dec_income * Decimal("0.25")):
             risk_level = "CAUTION" if risk_level != "UNSAFE" else "UNSAFE"
-            warnings.append(
-                "High flexible spending while essential expenses are underfunded."
-            )
+            warnings.append("High flexible spending while essential expenses are underfunded.")
 
         # Calculate projected resilience impact
-        # More buffer and lower debt improves score
-        buffer_coverage_pct = min(100.0, (projected_buffer / buffer_target * 100.0)) if buffer_target > 0 else 50.0
-        buffer_pts = (buffer_amt + recovery) / max(1000.0, buffer_target) * 15.0
+        dec_buf_target = _to_dec(buffer_target)
+        buffer_pts = float((buffer_amt + recovery) / max(Decimal("1000.00"), dec_buf_target) * Decimal("15.0"))
         
-        # Penalize if flexible spending is excessive during low buffer
         flex_penalty = 0.0
-        if projected_buffer < minimum_buffer_floor * 1.2 and flexible > (income * 0.40):
+        if projected_buffer_dec < (dec_min_floor * Decimal("1.2")) and flexible > (dec_income * Decimal("0.40")):
             flex_penalty = 6.0
             if risk_level == "SAFE":
                 risk_level = "CAUTION"
@@ -253,12 +272,13 @@ class MoneyAllocationService:
             max(10.0, min(100.0, current_resilience + buffer_pts - flex_penalty)), 1
         )
 
-        # Coverage weeks projected
-        coverage_weeks = round(projected_buffer / essential_weekly_expenses, 1) if essential_weekly_expenses > 0 else 0.0
+        coverage_weeks = round(float(projected_buffer_dec / dec_ess_exp), 1) if dec_ess_exp > Decimal("0.00") else 0.0
 
-        # Goal progress projected
-        projected_goal = round(current_goal_amount + goals, 2)
-        goal_pct = min(100.0, round((projected_goal / goal_target * 100.0), 1)) if goal_target > 0 else 0.0
+        dec_goal_target = _to_dec(goal_target)
+        dec_curr_goal = _to_dec(current_goal_amount)
+        projected_goal_dec = dec_curr_goal + goals
+        projected_goal = _round_2(projected_goal_dec)
+        goal_pct = min(100.0, round(float(projected_goal_dec / dec_goal_target * Decimal("100.0")), 1)) if dec_goal_target > Decimal("0.00") else 0.0
 
         return {
             "is_safe": is_safe,
@@ -271,12 +291,12 @@ class MoneyAllocationService:
             "projected_goal_amount": projected_goal,
             "projected_goal_percentage": goal_pct,
             "breakdown": {
-                "essentials": essentials,
-                "protected_buffer": buffer_amt,
-                "upcoming_obligations": obligations,
-                "recovery": recovery,
-                "goals": goals,
-                "flexible_spending": flexible,
+                "essentials": _round_2(essentials),
+                "protected_buffer": _round_2(buffer_amt),
+                "upcoming_obligations": _round_2(obligations),
+                "recovery": _round_2(recovery),
+                "goals": _round_2(goals),
+                "flexible_spending": _round_2(flexible),
                 "total": total_proposed
             }
         }

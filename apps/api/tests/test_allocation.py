@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.main import app
 from app.core.database import Base, engine, SessionLocal
+from app.core.config import settings
 from app.db.seed import seed_database
 from app.models.models import User, BufferAccount, AuditLog, MoneyAllocationPlan, FinancialGoal
 from app.engine.money_allocation_service import MoneyAllocationService
@@ -16,8 +17,11 @@ client = TestClient(app)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    settings.DEMO_MODE_ENABLED = True
     Base.metadata.create_all(bind=engine)
     seed_database()
+    yield
+    settings.DEMO_MODE_ENABLED = False
 
 
 # 1. Deterministic Service Unit Tests

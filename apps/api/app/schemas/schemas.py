@@ -1,15 +1,24 @@
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 
 # --- Auth & User ---
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str = Field(..., min_length=6)
+    password: str
     full_name: str
     currency: Optional[str] = "INR"
     country: Optional[str] = "India"
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        from app.core.security import validate_password_strength
+        is_valid, error_msg = validate_password_strength(v)
+        if not is_valid:
+            raise ValueError(error_msg)
+        return v
 
 
 class UserLogin(BaseModel):
@@ -30,7 +39,7 @@ class Token(BaseModel):
 
 
 class TokenRefreshRequest(BaseModel):
-    refresh_token: str
+    refresh_token: Optional[str] = None
 
 
 class UserOut(BaseModel):
@@ -63,11 +72,18 @@ class FinancialProfileUpdate(BaseModel):
     persona_name: Optional[str] = None
     persona_type: Optional[str] = None
     pay_frequency: Optional[str] = None
-    target_buffer: Optional[float] = None
-    minimum_cash_reserve: Optional[float] = None
-    minimum_buffer_floor: Optional[float] = None
-    essential_weekly_expenses: Optional[float] = None
-    policy_limit_ratio: Optional[float] = None
+    target_buffer: Optional[float] = Field(None, gt=0)
+    minimum_cash_reserve: Optional[float] = Field(None, ge=0)
+    minimum_buffer_floor: Optional[float] = Field(None, ge=0)
+    essential_weekly_expenses: Optional[float] = Field(None, gt=0)
+    policy_limit_ratio: Optional[float] = Field(None, gt=0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_floor_against_target(self) -> "FinancialProfileUpdate":
+        if self.minimum_buffer_floor is not None and self.target_buffer is not None:
+            if self.minimum_buffer_floor > self.target_buffer:
+                raise ValueError("Minimum buffer floor cannot exceed target buffer.")
+        return self
 
 
 class FinancialProfileOut(BaseModel):
@@ -302,7 +318,7 @@ class AllocationApproveOut(BaseModel):
     plan_id: int
     status: str
     updated_buffer_balance: float
-    audit_log_id: int
+    audit_log_id: Optional[int] = None
 
 
 class FinancialGoalOut(BaseModel):
@@ -466,6 +482,7 @@ class CsvPreviewResponse(BaseModel):
     duplicate_rows: int
     total_inflow: float
     total_outflow: float
+    batch_fingerprint: Optional[str] = None
     items: List[CsvPreviewItem]
 
 
@@ -485,6 +502,8 @@ class CsvCommitRequest(BaseModel):
 
 class CsvCommitResponse(BaseModel):
     imported_count: int
+    duplicates_skipped: int = 0
+    rejected_rows: int = 0
     total_inflow: float
     total_outflow: float
     message: str

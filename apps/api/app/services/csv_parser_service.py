@@ -6,6 +6,7 @@ Parses bank statements, UPI exports, and gig platform payout CSVs.
 import csv
 import io
 import re
+import hashlib
 from datetime import datetime, timezone
 from typing import List, Dict, Any, Optional, Tuple
 from sqlalchemy.orm import Session
@@ -15,6 +16,9 @@ from app.engine.categorization_engine import CategorizationEngine
 
 
 class CsvParserService:
+    MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB maximum
+    MAX_ROW_COUNT = 10000            # 10,000 rows maximum
+
     DATE_FORMATS = [
         "%Y-%m-%d",
         "%d/%m/%Y",
@@ -29,6 +33,11 @@ class CsvParserService:
         "%Y-%m-%dT%H:%M:%S",
         "%Y-%m-%dT%H:%M:%SZ"
     ]
+
+    @staticmethod
+    def normalize_description(text: str) -> str:
+        """Strip extra whitespace and normalize description for deduplication comparison."""
+        return re.sub(r"\s+", " ", str(text).strip()).lower()
 
     @staticmethod
     def clean_amount(val: Any) -> Optional[float]:
@@ -145,7 +154,12 @@ class CsvParserService:
     ) -> Dict[str, Any]:
         """
         Parses CSV content, auto-classifies transactions, and checks for duplicates.
+        Enforces maximum size (5 MB) and maximum rows (10,000).
+        Rejects invalid date formats explicitly.
         """
+        if len(file_bytes) > cls.MAX_FILE_SIZE:
+            raise ValueError(f"File size ({len(file_bytes) / (1024 * 1024):.1f} MB) exceeds maximum allowed limit of 5 MB.")
+
         # Decode bytes with fallback encoding support
         text_content = ""
         for encoding in ["utf-8-sig", "utf-8", "latin1", "cp1252"]:
@@ -166,6 +180,9 @@ class CsvParserService:
         if not rows:
             raise ValueError("CSV contains no rows.")
 
+        if len(rows) > cls.MAX_ROW_COUNT + 1:
+            raise ValueError(f"File contains {len(rows)} rows, exceeding maximum limit of {cls.MAX_ROW_COUNT} rows.")
+
         # Find header row (first non-empty row)
         header_idx = 0
         while header_idx < len(rows) and not any(rows[header_idx]):
@@ -179,15 +196,16 @@ class CsvParserService:
 
         # Fallbacks if columns are missing
         if not col_map["date"]:
-            # Default to first column if date not found
             col_map["date"] = raw_headers[0]
 
         if not col_map["description"]:
-            # Find any column that looks like text
             for h in raw_headers:
                 if h != col_map["date"] and h != col_map["amount"] and h != col_map["debit"] and h != col_map["credit"]:
                     col_map["description"] = h
                     break
+
+        # Calculate import batch fingerprint
+        batch_fingerprint = hashlib.sha256(file_bytes + f":{current_user.id}".encode("utf-8")).hexdigest()
 
         # Load existing user transactions to cross-check duplicates
         existing_txs = db.query(Transaction).filter(
@@ -197,7 +215,6 @@ class CsvParserService:
         existing_lookup = set()
         for t in existing_txs:
             t_date = t.date.strftime("%Y-%m-%d")
-            # Tuple key: (date, round(amount, 2), type)
             existing_lookup.add((t_date, round(float(t.amount), 2), t.transaction_type.upper()))
 
         items: List[Dict[str, Any]] = []
@@ -213,12 +230,14 @@ class CsvParserService:
 
             row_dict = dict(zip(raw_headers, [c.strip() for c in row]))
 
-            # 1. Parse Date
+            # 1. Parse Date - Strictly reject invalid dates without silent fallback to today
             raw_date = row_dict.get(col_map["date"] or "", "")
             parsed_dt = cls.parse_date(raw_date)
             if not parsed_dt:
-                # Default to today if date is unparseable
-                parsed_dt = datetime.now(timezone.utc)
+                raise ValueError(
+                    f"Row {row_idx}: Invalid or unparseable date '{raw_date}'. "
+                    f"Please provide a valid date format (e.g. YYYY-MM-DD or DD/MM/YYYY)."
+                )
             date_str = parsed_dt.strftime("%Y-%m-%d")
 
             # 2. Parse Description
@@ -325,5 +344,6 @@ class CsvParserService:
             "duplicate_rows": duplicate_count,
             "total_inflow": round(total_inflow, 2),
             "total_outflow": round(total_outflow, 2),
+            "batch_fingerprint": batch_fingerprint,
             "items": items
         }

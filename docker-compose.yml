@@ -6,15 +6,15 @@ services:
     container_name: sure_savings_db
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
-      POSTGRES_DB: sure_savings
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgrespassword}
+      POSTGRES_DB: ${POSTGRES_DB:-sure_savings}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -26,11 +26,11 @@ services:
     container_name: sure_savings_api
     restart: always
     environment:
-      - ENVIRONMENT=production
-      - DATABASE_URL=postgresql://postgres:postgrespassword@db:5432/sure_savings
-      - SECRET_KEY=prod_super_secret_sure_savings_key_change_via_env
-      - CORS_ORIGINS=http://localhost:3000,http://localhost:3001
-      - DEMO_MODE_ENABLED=true
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgrespassword}@db:5432/${POSTGRES_DB:-sure_savings}
+      - SECRET_KEY=${SECRET_KEY}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001}
+      - DEMO_MODE_ENABLED=${DEMO_MODE_ENABLED:-false}
     ports:
       - "8000:8000"
     depends_on:
@@ -44,7 +44,7 @@ services:
     container_name: sure_savings_web
     restart: always
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000/api/v1}
     ports:
       - "3001:3001"
     depends_on:

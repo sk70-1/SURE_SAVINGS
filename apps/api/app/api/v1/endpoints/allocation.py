@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 from typing import List, Optional, Dict, Any
 from datetime import datetime, timezone
+from decimal import Decimal
 import json
 
 from app.api.deps import get_db, get_current_user
@@ -33,9 +34,9 @@ def _get_user_financial_context(user_id: int, db: Session) -> Dict[str, Any]:
 
     # Recent transactions
     txs = db.query(Transaction).filter(Transaction.user_id == user_id).order_by(Transaction.date.asc()).all()
-    incomes = [t.amount for t in txs if t.transaction_type == "INCOME"]
-    expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE"]
-    essential_expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
+    incomes = [float(t.amount) for t in txs if t.transaction_type == "INCOME"]
+    expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE"]
+    essential_expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
 
     income_stats = FinancialEngine.calculate_income_analytics(incomes)
     forecast = ForecastEngine.forecast_next_period(incomes)
@@ -44,7 +45,7 @@ def _get_user_financial_context(user_id: int, db: Session) -> Dict[str, Any]:
     ess_exp = sum(essential_expenses) if essential_expenses else 0.65 * total_exp
     essential_ratio = ess_exp / total_exp
     recent_incomes = incomes[-4:] if len(incomes) >= 4 else incomes
-    cash_flow_net = sum(recent_incomes) - (profile.essential_weekly_expenses * len(recent_incomes))
+    cash_flow_net = sum(recent_incomes) - (float(profile.essential_weekly_expenses) * len(recent_incomes))
 
     resilience = FinancialEngine.calculate_resilience_score(
         income_volatility_cv=income_stats["cv"],
@@ -59,20 +60,20 @@ def _get_user_financial_context(user_id: int, db: Session) -> Dict[str, Any]:
         FinancialGoal.user_id == user_id,
         FinancialGoal.is_completed == False
     ).order_by(FinancialGoal.priority.asc()).first()
-    active_goal_need = max(0.0, active_goal.target_amount - active_goal.current_amount) if active_goal else 0.0
+    active_goal_need = max(0.0, float(active_goal.target_amount) - float(active_goal.current_amount)) if active_goal else 0.0
 
     # Recent drawdown need
     recent_drawdowns = db.query(BufferTransaction).filter(
         BufferTransaction.user_id == user_id,
         BufferTransaction.transaction_type == "WITHDRAWAL"
     ).order_by(BufferTransaction.created_at.desc()).limit(2).all()
-    recent_drawdown_amount = sum(d.amount for d in recent_drawdowns)
+    recent_drawdown_amount = float(sum(d.amount for d in recent_drawdowns))
 
     # Upcoming obligations: look for upcoming essential bills or estimate 25% of essential expenses
-    upcoming_obligations = round(profile.essential_weekly_expenses * 0.25, 2)
+    upcoming_obligations = round(float(profile.essential_weekly_expenses) * 0.25, 2)
 
     # Most recent actual income
-    most_recent_income = incomes[-1] if incomes else profile.essential_weekly_expenses
+    most_recent_income = float(incomes[-1]) if incomes else float(profile.essential_weekly_expenses)
 
     # Income trend calculation
     is_income_declining = False
@@ -280,30 +281,53 @@ def approve_allocation_plan(
     Explicit user approval flow:
     Executes the validated allocation, updates the simulated buffer account,
     updates goal balances, logs an immutable audit entry, and triggers a notification.
+    Idempotent: Approving an already approved plan returns a safe response without double-crediting.
     """
-    plan = db.query(MoneyAllocationPlan).filter(
+    # Use row-level locking where supported (PostgreSQL with_for_update)
+    query = db.query(MoneyAllocationPlan).filter(
         MoneyAllocationPlan.id == plan_id,
         MoneyAllocationPlan.user_id == current_user.id
-    ).first()
+    )
+    try:
+        plan = query.with_for_update().first()
+    except Exception:
+        plan = query.first()
 
     if not plan:
         raise HTTPException(status_code=404, detail="Allocation plan not found.")
 
     ctx = _get_user_financial_context(current_user.id, db)
 
+    # Idempotency guard: if already approved, return success without re-crediting buffer or goals
+    if plan.status == "APPROVED":
+        return AllocationApproveOut(
+            success=True,
+            message="Allocation plan was already approved.",
+            plan_id=plan.id,
+            status="APPROVED",
+            updated_buffer_balance=float(ctx["buffer_acc"].current_balance),
+            audit_log_id=None
+        )
+
+    if plan.status != "PENDING":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Cannot approve allocation plan with status '{plan.status}'. Plan must be PENDING."
+        )
+
     # Use custom breakdown if user edited values in simulator
     if req and req.custom_breakdown:
         sim = MoneyAllocationService.validate_and_simulate(
             proposed_breakdown=req.custom_breakdown,
-            income_received=plan.income_amount,
-            current_buffer=ctx["buffer_acc"].current_balance,
-            buffer_target=ctx["buffer_acc"].target_amount,
-            minimum_buffer_floor=ctx["buffer_acc"].minimum_floor,
-            essential_weekly_expenses=ctx["profile"].essential_weekly_expenses,
+            income_received=float(plan.income_amount),
+            current_buffer=float(ctx["buffer_acc"].current_balance),
+            buffer_target=float(ctx["buffer_acc"].target_amount),
+            minimum_buffer_floor=float(ctx["buffer_acc"].minimum_floor),
+            essential_weekly_expenses=float(ctx["profile"].essential_weekly_expenses),
             income_volatility_cv=ctx["income_stats"]["cv"],
             current_resilience=ctx["resilience"]["overall_score"],
-            goal_target=ctx["active_goal"].target_amount if ctx["active_goal"] else 0.0,
-            current_goal_amount=ctx["active_goal"].current_amount if ctx["active_goal"] else 0.0
+            goal_target=float(ctx["active_goal"].target_amount) if ctx["active_goal"] else 0.0,
+            current_goal_amount=float(ctx["active_goal"].current_amount) if ctx["active_goal"] else 0.0
         )
         if not sim["is_safe"]:
             raise HTTPException(
@@ -312,20 +336,20 @@ def approve_allocation_plan(
             )
 
         # Update plan with user customized values
-        plan.essential_amount = req.custom_breakdown.get("essentials", plan.essential_amount)
-        plan.buffer_amount = req.custom_breakdown.get("protected_buffer", plan.buffer_amount)
-        plan.obligation_amount = req.custom_breakdown.get("upcoming_obligations", plan.obligation_amount)
-        plan.flexible_amount = req.custom_breakdown.get("flexible_spending", plan.flexible_amount)
-        plan.goal_amount = req.custom_breakdown.get("goals", plan.goal_amount)
-        plan.recovery_amount = req.custom_breakdown.get("recovery", plan.recovery_amount)
+        plan.essential_amount = Decimal(str(req.custom_breakdown.get("essentials", plan.essential_amount)))
+        plan.buffer_amount = Decimal(str(req.custom_breakdown.get("protected_buffer", plan.buffer_amount)))
+        plan.obligation_amount = Decimal(str(req.custom_breakdown.get("upcoming_obligations", plan.obligation_amount)))
+        plan.flexible_amount = Decimal(str(req.custom_breakdown.get("flexible_spending", plan.flexible_amount)))
+        plan.goal_amount = Decimal(str(req.custom_breakdown.get("goals", plan.goal_amount)))
+        plan.recovery_amount = Decimal(str(req.custom_breakdown.get("recovery", plan.recovery_amount)))
         plan.risk_level = sim["risk_level"]
         plan.resilience_after = sim["projected_resilience"]
 
-    # Execute simulated updates
+    # Execute simulated updates with Decimal precision
     # 1. Update Buffer Account with buffer_amount + recovery_amount
-    buffer_addition = plan.buffer_amount + plan.recovery_amount
-    if buffer_addition > 0:
-        ctx["buffer_acc"].current_balance = round(ctx["buffer_acc"].current_balance + buffer_addition, 2)
+    buffer_addition = Decimal(str(plan.buffer_amount)) + Decimal(str(plan.recovery_amount))
+    if buffer_addition > Decimal("0.00"):
+        ctx["buffer_acc"].current_balance = Decimal(str(ctx["buffer_acc"].current_balance)) + buffer_addition
         ctx["buffer_acc"].last_updated = datetime.now(timezone.utc)
 
         # Record buffer transaction
@@ -340,8 +364,8 @@ def approve_allocation_plan(
         db.add(buf_tx)
 
     # 2. Update Goal if allocated
-    if plan.goal_amount > 0 and ctx["active_goal"]:
-        ctx["active_goal"].current_amount = round(ctx["active_goal"].current_amount + plan.goal_amount, 2)
+    if Decimal(str(plan.goal_amount)) > Decimal("0.00") and ctx["active_goal"]:
+        ctx["active_goal"].current_amount = Decimal(str(ctx["active_goal"].current_amount)) + Decimal(str(plan.goal_amount))
         if ctx["active_goal"].current_amount >= ctx["active_goal"].target_amount:
             ctx["active_goal"].is_completed = True
 
@@ -382,7 +406,7 @@ def approve_allocation_plan(
         message=f"Allocation of ₹{plan.income_amount:,.2f} approved and simulated successfully.",
         plan_id=plan.id,
         status="APPROVED",
-        updated_buffer_balance=ctx["buffer_acc"].current_balance,
+        updated_buffer_balance=float(ctx["buffer_acc"].current_balance),
         audit_log_id=audit.id
     )
 

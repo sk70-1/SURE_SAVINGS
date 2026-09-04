@@ -119,7 +119,7 @@ async def preview_transactions_csv(
     except ValueError as ve:
         raise HTTPException(status_code=422, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to parse CSV statement: {str(e)}")
+        raise HTTPException(status_code=422, detail="Failed to parse CSV statement. Please verify file format and columns.")
 
 
 @router.post("/import/confirm", response_model=CsvCommitResponse)
@@ -130,21 +130,57 @@ def confirm_transactions_csv(
 ):
     """
     Commits approved transactions into the database after user review.
+    Re-validates rows and re-checks duplicates against database before inserting.
     """
     if not commit_req.items:
         raise HTTPException(status_code=400, detail="No transactions selected for import.")
 
+    # Query existing database transactions for authoritative deduplication
+    existing_txs = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id
+    ).all()
+    existing_lookup = set()
+    for t in existing_txs:
+        t_date = t.date.strftime("%Y-%m-%d")
+        existing_lookup.add((t_date, round(float(t.amount), 2), t.transaction_type.upper()))
+
     total_inflow = 0.0
     total_outflow = 0.0
     imported_count = 0
+    duplicates_skipped = 0
+    rejected_count = 0
+    seen_in_batch = set()
 
     for item in commit_req.items:
         parsed_dt = CsvParserService.parse_date(item.date)
         if not parsed_dt:
-            parsed_dt = datetime.now(timezone.utc)
+            rejected_count += 1
+            continue
 
-        amt = float(item.amount)
+        try:
+            amt = round(float(item.amount), 2)
+            if amt <= 0:
+                rejected_count += 1
+                continue
+        except (ValueError, TypeError):
+            rejected_count += 1
+            continue
+
         ttype = item.transaction_type.upper()
+        if ttype not in ("INCOME", "EXPENSE"):
+            rejected_count += 1
+            continue
+
+        date_str = parsed_dt.strftime("%Y-%m-%d")
+        lookup_key = (date_str, amt, ttype)
+
+        # Authoritative server-side duplicate check
+        if lookup_key in existing_lookup or lookup_key in seen_in_batch:
+            duplicates_skipped += 1
+            continue
+
+        seen_in_batch.add(lookup_key)
+
         if ttype == "INCOME":
             total_inflow += amt
         else:
@@ -166,16 +202,21 @@ def confirm_transactions_csv(
     audit = AuditLog(
         user_id=current_user.id,
         action="CSV_CONFIRM_IMPORT",
-        details=f"Imported {imported_count} transactions (+₹{total_inflow:,.2f} inflows, -₹{total_outflow:,.2f} outflows)"
+        details=(
+            f"Imported {imported_count} transactions (+₹{total_inflow:,.2f} inflows, "
+            f"-₹{total_outflow:,.2f} outflows), skipped {duplicates_skipped} duplicates, rejected {rejected_count} rows"
+        )
     )
     db.add(audit)
     db.commit()
 
     return {
         "imported_count": imported_count,
+        "duplicates_skipped": duplicates_skipped,
+        "rejected_rows": rejected_count,
         "total_inflow": round(total_inflow, 2),
         "total_outflow": round(total_outflow, 2),
-        "message": f"Successfully imported {imported_count} transactions."
+        "message": f"Successfully imported {imported_count} transactions ({duplicates_skipped} duplicates skipped, {rejected_count} rejected)."
     }
 
 
@@ -199,7 +240,9 @@ async def import_transactions_csv(
         for item in preview["items"]:
             if item["is_duplicate"]:
                 continue
-            parsed_dt = CsvParserService.parse_date(item["date"]) or datetime.now(timezone.utc)
+            parsed_dt = CsvParserService.parse_date(item["date"])
+            if not parsed_dt:
+                continue
             tx = Transaction(
                 user_id=current_user.id,
                 date=parsed_dt,
@@ -219,5 +262,7 @@ async def import_transactions_csv(
             "imported": imported_count,
             "duplicates_skipped": preview["duplicate_rows"]
         }
+    except ValueError as ve:
+        raise HTTPException(status_code=422, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=422, detail=f"CSV import error: {str(e)}")
+        raise HTTPException(status_code=422, detail="Failed to import CSV statement.")

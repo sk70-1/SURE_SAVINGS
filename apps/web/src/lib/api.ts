@@ -108,14 +108,51 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     // Primary path: Bearer JWT Token
     headers["Authorization"] = `Bearer ${token}`;
   } else if (isDemoModeActive) {
-    // Sandbox Demo mode: explicit demo persona header
-    headers["X-Demo-Persona"] = currentDemoPersonaEmail;
+    // Suppress demo persona header in production environments
+    const isProductionHost = typeof window !== "undefined" && 
+      (window.location.hostname.includes("onrender.com") || 
+       window.location.hostname.includes("vercel.app") ||
+       (window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1"));
+    if (!isProductionHost) {
+      headers["X-Demo-Persona"] = currentDemoPersonaEmail;
+    }
   }
 
-  const res = await fetch(url, {
+  let res = await fetch(url, {
     ...options,
+    credentials: "include", // Transmit and receive HttpOnly cookies across origins
     headers,
   });
+
+  // Silent refresh retry on 401 Unauthorized (unless requesting auth routes directly)
+  if (res.status === 401 && !endpoint.includes("/auth/login") && !endpoint.includes("/auth/refresh") && !endpoint.includes("/auth/register")) {
+    try {
+      const refreshRes = await fetch(`${base}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      if (refreshRes.ok) {
+        const refreshData: AuthResponse = await refreshRes.json();
+        if (refreshData.access_token) {
+          setAuthToken(refreshData.access_token);
+          headers["Authorization"] = `Bearer ${refreshData.access_token}`;
+          // Retry the original request once with the new access token
+          res = await fetch(url, {
+            ...options,
+            credentials: "include",
+            headers,
+          });
+        }
+      } else {
+        setAuthToken(null);
+      }
+    } catch {
+      setAuthToken(null);
+    }
+  }
 
   if (!res.ok) {
     let errorMessage = `Request failed with status ${res.status}`;

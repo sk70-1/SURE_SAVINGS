@@ -18,7 +18,7 @@ def _get_user_income_series(db: Session, user_id: int) -> List[float]:
         .order_by(Transaction.date.asc())
         .all()
     )
-    return [t.amount for t in txs]
+    return [float(t.amount) for t in txs]
 
 
 @router.get("/summary", response_model=IncomeSummaryOut)

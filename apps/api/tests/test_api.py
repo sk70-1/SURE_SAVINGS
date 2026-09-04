@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")
 
 from app.main import app
 from app.core.database import Base, engine, SessionLocal
+from app.core.config import settings
 from app.db.seed import seed_database
 
 client = TestClient(app)
@@ -14,9 +15,12 @@ client = TestClient(app)
 
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_db():
+    settings.DEMO_MODE_ENABLED = True
     Base.metadata.create_all(bind=engine)
     # Ensure seeded users exist
     seed_database()
+    yield
+    settings.DEMO_MODE_ENABLED = False
 
 
 def test_health_check():

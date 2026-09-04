@@ -26,9 +26,9 @@ def chat_with_ai(
     recs = db.query(Recommendation).filter(Recommendation.user_id == current_user.id, Recommendation.status == "PENDING").all()
     txs = db.query(Transaction).filter(Transaction.user_id == current_user.id).order_by(Transaction.date.asc()).all()
 
-    incomes = [t.amount for t in txs if t.transaction_type == "INCOME"]
-    expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE"]
-    essential_expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
+    incomes = [float(t.amount) for t in txs if t.transaction_type == "INCOME"]
+    expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE"]
+    essential_expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
 
     income_stats = FinancialEngine.calculate_income_analytics(incomes)
     forecast = ForecastEngine.forecast_next_period(incomes)
@@ -37,17 +37,17 @@ def chat_with_ai(
     ess_exp = sum(essential_expenses) if essential_expenses else 0.65 * total_exp
     essential_ratio = ess_exp / total_exp
     recent_incomes = incomes[-4:] if len(incomes) >= 4 else incomes
-    cash_flow_net = sum(recent_incomes) - (prof.essential_weekly_expenses * len(recent_incomes))
+    cash_flow_net = sum(recent_incomes) - (float(prof.essential_weekly_expenses) * len(recent_incomes))
 
     resilience = FinancialEngine.calculate_resilience_score(
         income_volatility_cv=income_stats["cv"],
-        current_buffer=buf.current_balance,
-        buffer_target=buf.target_amount,
+        current_buffer=float(buf.current_balance),
+        buffer_target=float(buf.target_amount),
         essential_ratio=essential_ratio,
         cash_flow_net=cash_flow_net
     )
 
-    safe_available = FinancialEngine.calculate_available_safe_buffer(buf.current_balance, buf.minimum_floor)
+    safe_available = FinancialEngine.calculate_available_safe_buffer(float(buf.current_balance), float(buf.minimum_floor))
     coverage_wks = round(buf.current_balance / prof.essential_weekly_expenses, 1) if prof.essential_weekly_expenses > 0 else 0.0
 
     buffer_status = {

@@ -17,9 +17,9 @@ services:
       - key: SECRET_KEY
         generateValue: true
       - key: CORS_ORIGINS
-        value: "*"
+        value: "https://sure-savings-web.onrender.com,http://localhost:3000,http://localhost:3001"
       - key: DEMO_MODE_ENABLED
-        value: "true"
+        value: "false"
 
   # 2. Next.js Frontend Service
   - type: web

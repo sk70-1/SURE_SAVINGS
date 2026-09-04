@@ -51,8 +51,8 @@ def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    # 2. Demo Sandbox Mode (Only active when DEMO_MODE_ENABLED is True)
-    if settings.DEMO_MODE_ENABLED:
+    # 2. Demo Sandbox Mode (Only active when DEMO_MODE_ENABLED is True and NOT in production)
+    if settings.is_demo_mode:
         target_email = x_demo_persona or query_demo_persona or x_user_email
         if target_email:
             demo_user = db.query(User).filter(
@@ -62,7 +62,7 @@ def get_current_user(
             if demo_user:
                 return demo_user
 
-        # Demo fallback for testing and sandbox view
+        # Demo fallback for testing and sandbox view in demo mode
         primary_demo = db.query(User).filter(
             User.email == "arjun@example.com",
             User.is_demo == True

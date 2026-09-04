@@ -21,9 +21,9 @@ def get_resilience_score(
 
     # Calculate real-time metrics
     txs = db.query(Transaction).filter(Transaction.user_id == current_user.id).all()
-    incomes = [t.amount for t in txs if t.transaction_type == "INCOME"]
-    expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE"]
-    essential_expenses = [t.amount for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
+    incomes = [float(t.amount) for t in txs if t.transaction_type == "INCOME"]
+    expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE"]
+    essential_expenses = [float(t.amount) for t in txs if t.transaction_type == "EXPENSE" and t.is_essential]
 
     stats = FinancialEngine.calculate_income_analytics(incomes)
     total_exp = sum(expenses) if expenses else 1.0
@@ -31,12 +31,12 @@ def get_resilience_score(
     essential_ratio = ess_exp / total_exp
 
     recent_incomes = incomes[-4:] if len(incomes) >= 4 else incomes
-    cash_flow_net = sum(recent_incomes) - (prof.essential_weekly_expenses * len(recent_incomes))
+    cash_flow_net = sum(recent_incomes) - (float(prof.essential_weekly_expenses) * len(recent_incomes))
 
     resilience = FinancialEngine.calculate_resilience_score(
         income_volatility_cv=stats["cv"],
-        current_buffer=buf.current_balance,
-        buffer_target=buf.target_amount,
+        current_buffer=float(buf.current_balance),
+        buffer_target=float(buf.target_amount),
         essential_ratio=essential_ratio,
         cash_flow_net=cash_flow_net
     )

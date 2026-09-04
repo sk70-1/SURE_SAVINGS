@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+from decimal import Decimal
 from sqlalchemy import (
-    Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text
+    Column, Integer, String, Float, Numeric, Boolean, DateTime, ForeignKey, Text, Index
 )
 from sqlalchemy.orm import relationship
 from app.core.database import Base
@@ -34,6 +35,24 @@ class User(Base):
     allocation_plans = relationship("MoneyAllocationPlan", back_populates="user", cascade="all, delete-orphan")
     goals = relationship("FinancialGoal", back_populates="user", cascade="all, delete-orphan")
     obligations = relationship("ScheduledObligation", back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens = relationship("RefreshToken", back_populates="user", cascade="all, delete-orphan")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
+    token_jti = Column(String(64), unique=True, index=True, nullable=False)
+    token_hash = Column(String(128), index=True, nullable=False)
+    expires_at = Column(DateTime, nullable=False)
+    revoked = Column(Boolean, default=False, index=True, nullable=False)
+    revoked_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=utcnow)
+    user_agent = Column(String(255), nullable=True)
+    ip_address = Column(String(45), nullable=True)
+
+    user = relationship("User", back_populates="refresh_tokens")
 
 
 class FinancialProfile(Base):
@@ -44,11 +63,11 @@ class FinancialProfile(Base):
     persona_name = Column(String(100), default="General Earner")
     persona_type = Column(String(50), default="moderate_volatile")
     pay_frequency = Column(String(30), default="weekly")
-    target_buffer = Column(Float, default=25000.0)
-    minimum_cash_reserve = Column(Float, default=2000.0)  # Unbreakable checking reserve
-    minimum_buffer_floor = Column(Float, default=5000.0)  # Unbreakable buffer floor
-    essential_weekly_expenses = Column(Float, default=5000.0)
-    policy_limit_ratio = Column(Float, default=0.50)  # Max % of surplus saved in single cycle
+    target_buffer = Column(Numeric(18, 2, asdecimal=True), default=Decimal("25000.00"))
+    minimum_cash_reserve = Column(Numeric(18, 2, asdecimal=True), default=Decimal("2000.00"))
+    minimum_buffer_floor = Column(Numeric(18, 2, asdecimal=True), default=Decimal("5000.00"))
+    essential_weekly_expenses = Column(Numeric(18, 2, asdecimal=True), default=Decimal("5000.00"))
+    policy_limit_ratio = Column(Numeric(5, 4, asdecimal=True), default=Decimal("0.5000"))
     created_at = Column(DateTime, default=utcnow)
     updated_at = Column(DateTime, default=utcnow, onupdate=utcnow)
 
@@ -61,7 +80,7 @@ class Transaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     date = Column(DateTime, index=True, nullable=False)
-    amount = Column(Float, nullable=False)  # Positive for all; transaction_type distinguishes
+    amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)  # Positive for all; transaction_type distinguishes
     description = Column(String(255), nullable=False)
     category = Column(String(100), nullable=False)
     transaction_type = Column(String(20), nullable=False)  # "INCOME" or "EXPENSE"
@@ -71,6 +90,10 @@ class Transaction(Base):
 
     user = relationship("User", back_populates="transactions")
 
+    __table_args__ = (
+        Index("ix_transactions_dedup", "user_id", "date", "amount", "transaction_type"),
+    )
+
 
 class IncomePrediction(Base):
     __tablename__ = "income_predictions"
@@ -78,9 +101,9 @@ class IncomePrediction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     prediction_date = Column(DateTime, nullable=False)
-    predicted_amount = Column(Float, nullable=False)
-    lower_bound = Column(Float, nullable=False)
-    upper_bound = Column(Float, nullable=False)
+    predicted_amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)
+    lower_bound = Column(Numeric(18, 2, asdecimal=True), nullable=False)
+    upper_bound = Column(Numeric(18, 2, asdecimal=True), nullable=False)
     confidence = Column(Float, default=0.85)
     model_name = Column(String(50), default="weighted_moving_average")
     created_at = Column(DateTime, default=utcnow)
@@ -91,10 +114,10 @@ class BufferAccount(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), unique=True, nullable=False)
-    current_balance = Column(Float, default=0.0)
-    target_amount = Column(Float, default=20000.0)  # Default 4 weeks of essential expenses
-    minimum_floor = Column(Float, default=5000.0)   # Floor protected from drawdowns
-    policy_limit = Column(Float, default=5000.0)    # Maximum single deposit cap
+    current_balance = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    target_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("20000.00"))
+    minimum_floor = Column(Numeric(18, 2, asdecimal=True), default=Decimal("5000.00"))
+    policy_limit = Column(Numeric(18, 2, asdecimal=True), default=Decimal("5000.00"))
     last_updated = Column(DateTime, default=utcnow, onupdate=utcnow)
 
     user = relationship("User", back_populates="buffer_account")
@@ -108,8 +131,8 @@ class BufferTransaction(Base):
     buffer_account_id = Column(Integer, ForeignKey("buffer_accounts.id"), index=True, nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     transaction_type = Column(String(30), nullable=False)  # "CONTRIBUTION" or "WITHDRAWAL"
-    amount = Column(Float, nullable=False)
-    resulting_balance = Column(Float, nullable=False)
+    amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)
+    resulting_balance = Column(Numeric(18, 2, asdecimal=True), nullable=False)
     notes = Column(String(255), default="")
     created_at = Column(DateTime, default=utcnow)
 
@@ -140,7 +163,7 @@ class Recommendation(Base):
     impact = Column(Text, nullable=False)
     priority = Column(String(20), default="MEDIUM")  # "HIGH", "MEDIUM", "LOW"
     confidence = Column(Float, default=0.90)
-    recommended_amount = Column(Float, default=0.0)
+    recommended_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
     status = Column(String(20), default="PENDING")  # "PENDING", "APPROVED", "DISMISSED"
     created_at = Column(DateTime, default=utcnow)
 
@@ -190,8 +213,8 @@ class FinancialGoal(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     title = Column(String(150), nullable=False)
-    target_amount = Column(Float, nullable=False)
-    current_amount = Column(Float, default=0.0)
+    target_amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)
+    current_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
     category = Column(String(50), default="EQUIPMENT")  # "EQUIPMENT", "EMERGENCY", "LIFESTYLE", "EDUCATION"
     priority = Column(Integer, default=1)
     is_completed = Column(Boolean, default=False)
@@ -206,13 +229,13 @@ class MoneyAllocationPlan(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     source_transaction_id = Column(Integer, ForeignKey("transactions.id"), nullable=True)
-    income_amount = Column(Float, nullable=False)
-    essential_amount = Column(Float, default=0.0)
-    buffer_amount = Column(Float, default=0.0)
-    obligation_amount = Column(Float, default=0.0)
-    flexible_amount = Column(Float, default=0.0)
-    goal_amount = Column(Float, default=0.0)
-    recovery_amount = Column(Float, default=0.0)
+    income_amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)
+    essential_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    buffer_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    obligation_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    flexible_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    goal_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
+    recovery_amount = Column(Numeric(18, 2, asdecimal=True), default=Decimal("0.00"))
     status = Column(String(30), default="PENDING")  # "PENDING", "APPROVED", "DISMISSED", "SIMULATED", "EXPIRED"
     reasoning_snapshot = Column(Text, default="{}")
     risk_level = Column(String(20), default="SAFE")  # "SAFE", "CAUTION", "UNSAFE"
@@ -224,6 +247,10 @@ class MoneyAllocationPlan(Base):
     user = relationship("User", back_populates="allocation_plans")
     source_transaction = relationship("Transaction")
 
+    __table_args__ = (
+        Index("ix_plans_user_status", "user_id", "status"),
+    )
+
 
 class ScheduledObligation(Base):
     __tablename__ = "scheduled_obligations"
@@ -231,11 +258,11 @@ class ScheduledObligation(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
     title = Column(String(150), nullable=False)
-    amount = Column(Float, nullable=False)
+    amount = Column(Numeric(18, 2, asdecimal=True), nullable=False)
     category = Column(String(100), default="bills", nullable=False)
     due_day = Column(Integer, nullable=True)  # 1-31 for monthly bills
     next_due_date = Column(DateTime, nullable=True)
-    frequency = Column(String(30), default="monthly", nullable=False)  # "weekly", "monthly", "quarterly", "yearly", "once"
+    frequency = Column(String(30), default="monthly", nullable=False)
     is_essential = Column(Boolean, default=True, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     reminder_days_before = Column(Integer, default=3, nullable=False)

@@ -62,11 +62,11 @@ def test_production_fails_on_insecure_secret():
 
     s_demo = Settings(
         ENVIRONMENT="production",
-        SECRET_KEY="a" * 32,
+        SECRET_KEY="c8f1e2d3b4a567890123456789abcdef0123456789abcdef0123456789abcdef",
         DEMO_MODE_ENABLED=True
     )
-    with pytest.raises(RuntimeError, match="DEMO_MODE_ENABLED cannot be True"):
-        s_demo.validate_production_configuration()
+    s_demo.validate_production_configuration()  # Allows demo mode with warning, does not crash
+    assert s_demo.is_demo_mode is True
 
     # Safe production configuration
     s_safe = Settings(

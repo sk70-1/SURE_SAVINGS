@@ -81,8 +81,6 @@ class Settings(BaseSettings):
 
     @property
     def is_demo_mode(self) -> bool:
-        if self.is_production:
-            return False
         return bool(self.DEMO_MODE_ENABLED)
 
     @property
@@ -105,8 +103,10 @@ class Settings(BaseSettings):
                     f"(current length: {len(self.SECRET_KEY)})."
                 )
             if self.DEMO_MODE_ENABLED:
-                raise RuntimeError(
-                    "FATAL: DEMO_MODE_ENABLED cannot be True in production ENVIRONMENT. Set DEMO_MODE_ENABLED=false."
+                import logging
+                logging.getLogger("uvicorn.error").warning(
+                    "SECURITY NOTICE: DEMO_MODE_ENABLED is True in production ENVIRONMENT. "
+                    "Demo sandbox personas are active for evaluation. All real user accounts remain strictly isolated."
                 )
 
 

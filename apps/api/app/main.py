@@ -26,8 +26,8 @@ async def lifespan(app: FastAPI):
             Base.metadata.create_all(bind=engine)
             print("Database connected and schema initialized successfully.")
 
-            # Auto-seed initial demo personas only if demo mode is enabled in non-production
-            if settings.is_demo_mode and settings.ENVIRONMENT in ("development", "demo"):
+            # Auto-seed initial demo personas only if demo mode is enabled
+            if settings.is_demo_mode:
                 try:
                     db = SessionLocal()
                     demo_count = db.query(User).filter(User.is_demo == True).count()

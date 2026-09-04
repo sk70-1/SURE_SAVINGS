@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, PlusCircle, ArrowDownLeft, ArrowUpRight, DollarSign, Calendar, Tag } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { X, PlusCircle, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { api } from "../lib/api";
 import { CreateTransactionPayload } from "../lib/types";
 
@@ -20,6 +21,9 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
   currencySymbol = "₹",
   initialType = "INCOME",
 }) => {
+  const t = useTranslations("modals.addTransaction");
+  const tCommon = useTranslations("common");
+
   const [type, setType] = useState<"INCOME" | "EXPENSE">(initialType);
 
   React.useEffect(() => {
@@ -98,7 +102,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       <div className="bg-white border border-[#eae8e3] rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
         <button
           onClick={onClose}
-          className="absolute top-5 right-5 text-[#9ca3af] hover:text-[#111827] p-1.5 rounded-full hover:bg-[#f3f4f6] transition-all"
+          className="absolute top-5 right-5 text-[#9ca3af] hover:text-[#111827] p-1.5 rounded-full hover:bg-[#f3f4f6] transition-all cursor-pointer"
         >
           <X className="w-5 h-5" />
         </button>
@@ -109,7 +113,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             <PlusCircle className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-[#111827]">Record Transaction</h3>
+            <h3 className="text-lg font-bold text-[#111827]">{t("title")}</h3>
             <p className="text-xs text-[#6b7280]">
               Log income or expenses to keep your smart buffer accurate
             </p>
@@ -125,14 +129,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               setCategory("freelance");
               setIsEssential(false);
             }}
-            className={`py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition-all ${
+            className={`py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
               type === "INCOME"
                 ? "bg-white text-[#059669] shadow-sm border border-[#a7f3d0]"
                 : "text-[#6b7280] hover:text-[#111827]"
             }`}
           >
             <ArrowDownLeft className="w-4 h-4" />
-            <span>Income Received</span>
+            <span>{t("incomeTab")}</span>
           </button>
           <button
             type="button"
@@ -140,14 +144,14 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
               setType("EXPENSE");
               setCategory("food");
             }}
-            className={`py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition-all ${
+            className={`py-2 px-3 text-xs font-bold rounded-lg flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
               type === "EXPENSE"
                 ? "bg-white text-[#e11d48] shadow-sm border border-[#fecdd3]"
                 : "text-[#6b7280] hover:text-[#111827]"
             }`}
           >
             <ArrowUpRight className="w-4 h-4" />
-            <span>Expense Paid</span>
+            <span>{t("expenseTab")}</span>
           </button>
         </div>
 
@@ -161,7 +165,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           {/* Amount */}
           <div>
             <label className="block text-xs font-bold text-[#374151] mb-1">
-              Amount ({currencySymbol})
+              {t("amountLabel")}
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-sm font-bold text-[#9ca3af]">
@@ -183,7 +187,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           {/* Description */}
           <div>
             <label className="block text-xs font-bold text-[#374151] mb-1">
-              Description / Memo
+              {t("descriptionLabel")}
             </label>
             <input
               type="text"
@@ -199,7 +203,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-bold text-[#374151] mb-1">
-                Category
+                {t("categoryLabel")}
               </label>
               <select
                 value={category}
@@ -216,7 +220,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
             <div>
               <label className="block text-xs font-bold text-[#374151] mb-1">
-                Date
+                {t("dateLabel")}
               </label>
               <input
                 type="date"
@@ -239,7 +243,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
                 className="w-4 h-4 text-[#ff5b45] rounded border-[#eae8e3] focus:ring-[#ff5b45]"
               />
               <label htmlFor="isEssential" className="text-xs text-[#4b5563] cursor-pointer">
-                <strong>Essential Expense</strong> (Required for basic living / non-negotiable)
+                <strong>{t("isEssentialLabel")}</strong>
               </label>
             </div>
           )}
@@ -247,9 +251,9 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 px-4 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-lg shadow-[#ff5b45]/25 active:scale-98 transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+            className="w-full mt-2 py-3 px-4 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-lg shadow-[#ff5b45]/25 active:scale-98 transition-all flex items-center justify-center space-x-2 disabled:opacity-50 cursor-pointer"
           >
-            {loading ? <span>Saving...</span> : <span>Confirm & Record Transaction</span>}
+            {loading ? <span>{tCommon("saving")}</span> : <span>{t("submitButton")}</span>}
           </button>
         </form>
       </div>

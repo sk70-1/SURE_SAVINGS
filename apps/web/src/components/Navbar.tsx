@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { Link, usePathname } from "../i18n/routing";
+import { useTranslations } from "next-intl";
 import {
   ShieldCheck,
   PlusCircle,
@@ -19,6 +19,7 @@ import {
   ToggleRight,
 } from "lucide-react";
 import { AuthUser } from "../lib/types";
+import { LanguageSelector } from "./LanguageSelector";
 
 interface NavbarProps {
   onOpenAi: () => void;
@@ -49,6 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   isDemoMode = false,
   onToggleDemoMode,
 }) => {
+  const t = useTranslations("navigation");
   const pathname = usePathname();
   const isDashboard = pathname === "/";
   const isCalendar = pathname === "/calendar";
@@ -77,17 +79,23 @@ export const Navbar: React.FC<NavbarProps> = ({
         
         {/* Left: Brand Logo & Primary Navigation */}
         <div className="flex items-center gap-3 sm:gap-6 shrink-0">
-          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#ff5b45] to-[#f59e0b] flex items-center justify-center shadow-sm shadow-[#ff5b45]/20 shrink-0 group-hover:scale-105 transition-transform">
-              <ShieldCheck className="w-5 h-5 text-white" />
+          <Link href="/" className="flex items-center gap-2 group cursor-pointer" aria-label="Sure-Savings Home">
+            {/* Mobile View: High-res circular icon */}
+            <div className="sm:hidden flex items-center">
+              <img
+                src="/icon.png"
+                alt="Sure-Savings"
+                className="w-9 h-9 rounded-full shadow-sm group-hover:scale-105 transition-transform object-contain"
+              />
             </div>
-            <div className="flex flex-col text-left">
-              <span className="text-base font-black tracking-tight text-[#111827] font-sans">
-                Sure-<span className="text-[#ff5b45]">Savings</span>
-              </span>
-              <span className="text-[10px] text-[#6b7280] font-medium hidden sm:block">
-                Daily Money Guide for Freelancers
-              </span>
+
+            {/* Desktop / Tablet View: Official Full Logo Banner */}
+            <div className="hidden sm:flex items-center h-10 px-2.5 py-1 bg-[#050b14] rounded-xl border border-slate-800 shadow-sm group-hover:border-emerald-500/50 group-hover:shadow-md transition-all">
+              <img
+                src="/logo.png"
+                alt="Sure-Savings - Smarter Money. Safer Tomorrow."
+                className="h-7 w-auto object-contain group-hover:scale-[1.02] transition-transform"
+              />
             </div>
           </Link>
 
@@ -102,7 +110,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
-              <span>Dashboard</span>
+              <span>{t("dashboard")}</span>
             </Link>
 
             <Link
@@ -114,21 +122,24 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               <CalendarDays className="w-3.5 h-3.5" />
-              <span>Upcoming Bills</span>
+              <span>{t("upcomingBills")}</span>
             </Link>
           </nav>
         </div>
 
-        {/* Right: Only "+ Add Transaction" and "Profile / Menu" */}
+        {/* Right: Language Selector, "+ Add Transaction", Profile / Menu */}
         <div className="flex items-center space-x-2" ref={menuRef}>
+          {/* Multilingual Language Switcher */}
+          <LanguageSelector />
+
           {/* Primary Action: Add Transaction */}
           <button
             onClick={currentUser || isDemoMode ? onOpenAddTransaction : onOpenAuth}
             className="px-3.5 py-2 text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] rounded-xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
-            <span className="hidden sm:inline">Add Transaction</span>
-            <span className="sm:hidden">Add</span>
+            <span className="hidden sm:inline">{t("addTransaction")}</span>
+            <span className="sm:hidden">{t("add")}</span>
           </button>
 
           {/* Profile / Menu Dropdown Trigger */}
@@ -150,12 +161,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               ) : isDemoMode ? (
                 <div className="flex items-center space-x-1.5">
                   <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="hidden md:inline font-bold text-xs text-amber-700">Demo User</span>
+                  <span className="hidden md:inline font-bold text-xs text-amber-700">{t("demoUser")}</span>
                 </div>
               ) : (
                 <div className="flex items-center space-x-1 text-[#6b7280]">
                   <UserIcon className="w-4 h-4" />
-                  <span className="hidden md:inline text-xs font-bold">Sign In</span>
+                  <span className="hidden md:inline text-xs font-bold">{t("signIn")}</span>
                 </div>
               )}
               {menuOpen ? <X className="w-3.5 h-3.5 text-[#6b7280]" /> : <Menu className="w-3.5 h-3.5 text-[#6b7280]" />}
@@ -168,14 +179,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <div className="px-3 py-2 border-b border-[#f3f4f6] mb-1">
                   {currentUser ? (
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af]">Logged in as</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-[#9ca3af]">{t("loggedInAs")}</span>
                       <p className="text-xs font-bold text-[#111827] truncate">{currentUser.full_name}</p>
                       <p className="text-[11px] text-[#6b7280] truncate">{currentUser.email}</p>
                     </div>
                   ) : (
                     <div>
-                      <span className="text-xs font-bold text-[#111827]">Welcome to Sure-Savings</span>
-                      <p className="text-[11px] text-[#6b7280]">Sign in to keep your money plan private</p>
+                      <span className="text-xs font-bold text-[#111827]">{t("welcomeTitle")}</span>
+                      <p className="text-[11px] text-[#6b7280]">{t("welcomeSubtitle")}</p>
                       <button
                         onClick={() => {
                           setMenuOpen(false);
@@ -183,7 +194,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                         }}
                         className="mt-2 w-full py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] rounded-xl cursor-pointer"
                       >
-                        Sign In / Register
+                        {t("signInRegister")}
                       </button>
                     </div>
                   )}
@@ -198,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
                 >
                   <HelpCircle className="w-4 h-4 text-[#ff5b45]" />
-                  <span>How it works</span>
+                  <span>{t("howItWorks")}</span>
                 </button>
 
                 {/* AI Assistant */}
@@ -210,7 +221,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   className="w-full px-3 py-2 text-xs font-medium text-[#374151] hover:text-[#111827] hover:bg-[#fbfbfa] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
                 >
                   <Sparkles className="w-4 h-4 text-[#ff5b45]" />
-                  <span>Ask Assistant</span>
+                  <span>{t("liveAiTitle")}</span>
                 </button>
 
                 {/* Toggle: Detailed vs Simple View */}
@@ -220,7 +231,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <div className="flex items-center space-x-2.5">
                     <Sliders className="w-4 h-4 text-[#6b7280]" />
-                    <span>Detailed View</span>
+                    <span>{isProMode ? "Pro Mode" : "Simple Mode"}</span>
                   </div>
                   {isProMode ? (
                     <ToggleRight className="w-5 h-5 text-[#ff5b45]" />
@@ -237,7 +248,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="flex items-center space-x-2.5">
                       <Sparkles className="w-4 h-4 text-[#059669]" />
-                      <span>Automatic Money Plan</span>
+                      <span>{t("autoSaveTitle")}</span>
                     </div>
                     {isAutopilotActive ? (
                       <ToggleRight className="w-5 h-5 text-[#059669]" />
@@ -277,7 +288,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                       className="w-full px-3 py-2 text-xs font-bold text-[#e11d48] hover:bg-[#fff1f2] rounded-xl flex items-center space-x-2.5 transition-colors cursor-pointer text-left"
                     >
                       <LogOut className="w-4 h-4" />
-                      <span>Sign Out</span>
+                      <span>{t("logOut")}</span>
                     </button>
                   </div>
                 )}

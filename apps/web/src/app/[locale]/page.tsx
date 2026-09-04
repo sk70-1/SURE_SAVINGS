@@ -1,23 +1,24 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Navbar } from "../components/Navbar";
-import { TodaysMoneyPlanCard } from "../components/TodaysMoneyPlanCard";
-import { SimpleSummaryCards } from "../components/SimpleSummaryCards";
-import { MoneyAllocationCard } from "../components/MoneyAllocationCard";
-import { ResilienceGauge } from "../components/ResilienceGauge";
-import { BufferCard } from "../components/BufferCard";
-import { IncomeAnalyticsCard } from "../components/IncomeAnalyticsCard";
-import { IncomeChart } from "../components/IncomeChart";
-import { RecommendationFeed } from "../components/RecommendationFeed";
-import { TransactionTable } from "../components/TransactionTable";
-import { BufferModal } from "../components/BufferModal";
-import { MoneyAllocationModal } from "../components/MoneyAllocationModal";
-import { AiDrawer } from "../components/AiDrawer";
-import { HowItWorksModal } from "../components/HowItWorksModal";
-import { AuthModal } from "../components/AuthModal";
-import { OnboardingModal } from "../components/OnboardingModal";
-import { AddTransactionModal } from "../components/AddTransactionModal";
+import { useTranslations } from "next-intl";
+import { Navbar } from "@/components/Navbar";
+import { TodaysMoneyPlanCard } from "@/components/TodaysMoneyPlanCard";
+import { SimpleSummaryCards } from "@/components/SimpleSummaryCards";
+import { MoneyAllocationCard } from "@/components/MoneyAllocationCard";
+import { ResilienceGauge } from "@/components/ResilienceGauge";
+import { BufferCard } from "@/components/BufferCard";
+import { IncomeAnalyticsCard } from "@/components/IncomeAnalyticsCard";
+import { IncomeChart } from "@/components/IncomeChart";
+import { RecommendationFeed } from "@/components/RecommendationFeed";
+import { TransactionTable } from "@/components/TransactionTable";
+import { BufferModal } from "@/components/BufferModal";
+import { MoneyAllocationModal } from "@/components/MoneyAllocationModal";
+import { AiDrawer } from "@/components/AiDrawer";
+import { HowItWorksModal } from "@/components/HowItWorksModal";
+import { AuthModal } from "@/components/AuthModal";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { AddTransactionModal } from "@/components/AddTransactionModal";
 import {
   IncomeAnalytics,
   IncomeForecast,
@@ -28,23 +29,24 @@ import {
   AllocationPlan,
   AuthUser,
   CalendarMonthData,
-} from "../lib/types";
-import { api, setAuthToken, getAuthToken, setDemoMode, getIsDemoMode } from "../lib/api";
+} from "@/lib/types";
+import { api, setAuthToken, getAuthToken, setDemoMode, getIsDemoMode } from "@/lib/api";
 import {
   CheckCircle,
   Shield,
-  ArrowRight,
   PlusCircle,
   ChevronDown,
   ChevronUp,
   Sparkles,
-  Wallet,
-  ReceiptText,
   Sliders,
-  HelpCircle,
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const tDash = useTranslations("dashboard");
+  const tNav = useTranslations("navigation");
+  const tNotif = useTranslations("notifications");
+  const tCommon = useTranslations("common");
+
   // Real User Authentication State
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
@@ -84,8 +86,8 @@ export default function DashboardPage() {
     setIsAutopilotActive(active);
     showToast(
       active
-        ? "⚡ Automatic Money Plan Activated"
-        : "⏸️ Automatic Money Plan Paused"
+        ? `⚡ ${tDash("autopilotActive")}`
+        : `⏸️ ${tDash("autopilotPaused")}`
     );
   };
 
@@ -161,7 +163,7 @@ export default function DashboardPage() {
     setCurrentUser(user);
     setDemoMode(false);
     setIsDemo(false);
-    showToast(`👋 Welcome, ${user.full_name}! Account active.`);
+    showToast(`👋 ${tNotif("loginSuccess")}`);
     if (needsOnboarding) {
       setOnboardingModalOpen(true);
     }
@@ -177,7 +179,7 @@ export default function DashboardPage() {
       setCurrentUser(null);
       setDemoMode(false);
       setIsDemo(false);
-      showToast("🔒 Logged out successfully.");
+      showToast(`🔒 ${tNotif("logoutSuccess")}`);
       refreshData();
     }
   };
@@ -351,7 +353,7 @@ export default function DashboardPage() {
                 }}
                 className="text-xs font-bold text-white bg-[#059669] hover:bg-[#047857] px-3.5 py-1.5 rounded-xl transition-all cursor-pointer shadow-xs"
               >
-                + Record Transaction
+                + {tNav("addTransaction")}
               </button>
             </div>
           </div>
@@ -363,10 +365,10 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h2 className="text-sm font-black text-[#111827]">
-                  Welcome to Sure-Savings — Daily Money Guide for Freelancers
+                  {tDash("heroTitle")}
                 </h2>
                 <p className="text-xs text-[#6b7280] mt-0.5">
-                  Sign in to save your personal emergency cushion plan, or try the demo sandbox.
+                  {tDash("heroSubtitle")}
                 </p>
               </div>
             </div>
@@ -375,19 +377,19 @@ export default function DashboardPage() {
                 onClick={() => setAuthModalOpen(true)}
                 className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] rounded-xl shadow-sm cursor-pointer"
               >
-                Sign In
+                {tNav("signIn")}
               </button>
               <button
                 onClick={handleToggleDemoMode}
                 className="px-3.5 py-2 text-xs font-bold text-[#ff5b45] bg-white border border-[#ffdad4] hover:bg-[#fff0ed] rounded-xl cursor-pointer"
               >
-                Try Demo
+                {tNav("demoUser")}
               </button>
             </div>
           </div>
         )}
 
-        {/* 1. Meaningful Empty State when User has 0 Account Data */}
+        {/* Meaningful Empty State when User has 0 Account Data */}
         {isFreshUserEmptyState ? (
           <div className="bg-white rounded-3xl border border-[#eae8e3] p-8 sm:p-12 text-center shadow-sm max-w-2xl mx-auto space-y-4">
             <div className="w-14 h-14 rounded-2xl bg-[#fff5f3] text-[#ff5b45] flex items-center justify-center mx-auto shadow-inner">
@@ -411,7 +413,7 @@ export default function DashboardPage() {
                 className="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-[#059669] to-[#047857] hover:opacity-95 text-white text-xs font-bold rounded-2xl shadow-sm inline-flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Add income</span>
+                <span>+ {tCommon("income")}</span>
               </button>
 
               <button
@@ -422,7 +424,7 @@ export default function DashboardPage() {
                 className="w-full sm:w-auto px-6 py-3 bg-[#fff5f3] hover:bg-[#ffe8e4] text-[#ff5b45] border border-[#ffdad4] text-xs font-bold rounded-2xl shadow-sm inline-flex items-center justify-center space-x-1.5 cursor-pointer"
               >
                 <PlusCircle className="w-4 h-4" />
-                <span>Add expense</span>
+                <span>+ {tCommon("expense")}</span>
               </button>
             </div>
 
@@ -438,7 +440,7 @@ export default function DashboardPage() {
         ) : (
           /* Normal Populated Dashboard View */
           <>
-            {/* 1. Today's Money Plan Hero Card (Requirement 1: First visible section) */}
+            {/* 1. Today's Money Plan Hero Card */}
             <TodaysMoneyPlanCard
               recommendations={recommendations}
               buffer={buffer}
@@ -461,7 +463,7 @@ export default function DashboardPage() {
               }}
             />
 
-            {/* 2. Three Simple Summary Cards (Requirement 2: Emergency Savings, Money Available, Upcoming Bills) */}
+            {/* 2. Three Simple Summary Cards */}
             <SimpleSummaryCards
               buffer={buffer}
               safeToSpend={safeToSpend}
@@ -477,7 +479,7 @@ export default function DashboardPage() {
               }}
             />
 
-            {/* 3. Automatic Money Plan (Requirement 5: Simplified 3-tier view) */}
+            {/* 3. Automatic Money Plan */}
             <MoneyAllocationCard
               plan={allocationPlan}
               isActive={isAutopilotActive}
@@ -564,7 +566,7 @@ export default function DashboardPage() {
           <div className="flex items-center space-x-2">
             <span className="font-bold text-[#111827] text-sm">Sure-<span className="text-[#ff5b45]">Savings</span></span>
             <span className="text-[#9ca3af]">•</span>
-            <span className="text-[#6b7280]">Daily Money Guide for Freelancers & Gig Workers</span>
+            <span className="text-[#6b7280]">{tNav("brandTagline")}</span>
           </div>
           
           <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-[#6b7280]">
@@ -589,7 +591,7 @@ export default function DashboardPage() {
         onAuthSuccess={handleAuthSuccess}
       />
 
-      {/* Onboarding Modal (3-step simple wizard) */}
+      {/* Onboarding Modal */}
       <OnboardingModal
         isOpen={onboardingModalOpen}
         onClose={() => setOnboardingModalOpen(false)}
@@ -605,7 +607,7 @@ export default function DashboardPage() {
         onClose={() => setAddTxModalOpen(false)}
         initialType={addTxInitialType}
         onTransactionAdded={() => {
-          showToast("✅ Transaction recorded successfully.");
+          showToast(`✅ ${tNotif("transactionAdded")}`);
           refreshData();
         }}
       />

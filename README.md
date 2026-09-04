@@ -1,6 +1,14 @@
-# Smart Income Buffer
+<p align="center">
+  <img src="apps/web/public/logo.png" alt="Sure-Savings Logo" width="480" />
+</p>
 
-> **Intelligent Cash Flow Stabilization & Reserve Management Platform for Irregular Earners and Gig Workers**
+<p align="center">
+  <em>Smarter Money. Safer Tomorrow. Intelligent Cash Flow Stabilization & Reserve Management Platform for Irregular Earners and Gig Workers</em>
+</p>
+
+<p align="center">
+  <img src="apps/web/public/icon.png" alt="Sure-Savings Icon" width="40" height="40" />
+</p>
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://sure-savings-web-pss8.onrender.com/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)

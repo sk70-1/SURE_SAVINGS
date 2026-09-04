@@ -8,7 +8,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["'Plus Jakarta Sans'", "Inter", "sans-serif"],
+        sans: ["'Plus Jakarta Sans'", "'Noto Sans Devanagari'", "'Noto Sans Tamil'", "'Noto Sans Bengali'", "Inter", "system-ui", "sans-serif"],
         mono: ["'JetBrains Mono'", "monospace"],
       },
       colors: {

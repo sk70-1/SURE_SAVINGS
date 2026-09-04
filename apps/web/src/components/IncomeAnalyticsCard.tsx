@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { TrendingUp, TrendingDown, CheckCircle2 } from "lucide-react";
 import { IncomeAnalytics } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface IncomeAnalyticsCardProps {
   analytics: IncomeAnalytics | null;
@@ -10,18 +12,21 @@ interface IncomeAnalyticsCardProps {
 }
 
 export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analytics, isProMode = false }) => {
+  const t = useTranslations("incomeAnalyticsCard");
+  const locale = useLocale();
+
   if (!analytics) {
     return (
       <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
         <div>
           <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-sm font-bold text-[#111827]">Average Weekly Pay</h3>
+            <h3 className="text-sm font-bold text-[#111827]">{t("title")}</h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
               Needs History
             </span>
           </div>
           <p className="text-xs text-[#6b7280]">
-            Your normal weekly pay based on past history.
+            {t("stabilizedDesc")}
           </p>
           <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
             <span className="text-3xl font-black text-[#9ca3af] font-mono">₹0 / wk</span>
@@ -40,10 +45,10 @@ export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analyt
   let predictability = "Normal Fluctuations";
   let predBadge = "bg-[#fffbeb] text-[#b45309] border-[#fef3c7]";
   if (analytics.volatility_rating === "Low") {
-    predictability = "Steady Pay";
+    predictability = t("volatilityLow");
     predBadge = "bg-[#ecfdf5] text-[#047857] border-[#a7f3d0]";
   } else if (analytics.volatility_rating === "High" || analytics.volatility_rating === "Extreme") {
-    predictability = "Unpredictable Pay";
+    predictability = t("volatilityHigh");
     predBadge = "bg-[#fff5f3] text-[#b91c1c] border-[#fecdd3]";
   }
 
@@ -54,19 +59,19 @@ export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analyt
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-bold text-[#111827]">
-                Average Weekly Pay
+                {t("title")}
               </h3>
               <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${predBadge}`}>
                 {predictability}
               </span>
             </div>
-            <p className="text-xs text-[#6b7280] mt-1">Your normal weekly pay based on past history</p>
+            <p className="text-xs text-[#6b7280] mt-1">{t("stabilizedDesc")}</p>
           </div>
 
           <div className="text-right">
-            <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Normal Pay</span>
+            <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">{t("stabilizedIncome")}</span>
             <div className="text-3xl font-black text-[#111827] tracking-tight font-mono">
-              ₹{Math.round(analytics.stabilized_income).toLocaleString("en-IN")}
+              {formatCurrency(Math.round(analytics.stabilized_income), "INR", locale)}
               <span className="text-xs font-normal text-[#9ca3af] font-sans">/wk</span>
             </div>
           </div>
@@ -78,10 +83,10 @@ export const IncomeAnalyticsCard: React.FC<IncomeAnalyticsCardProps> = ({ analyt
             <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block font-medium">This Week's Pay</span>
             <div className="flex items-baseline space-x-1.5 mt-0.5">
               <span className="text-sm font-bold text-[#111827] font-mono">
-                ₹{Math.round(analytics.recent_actual_income).toLocaleString("en-IN")}
+                {formatCurrency(Math.round(analytics.recent_actual_income), "INR", locale)}
               </span>
               <span className={`text-[10px] font-bold ${isAbove ? "text-[#059669]" : "text-[#ea580c]"}`}>
-                {isAbove ? `+₹${Math.round(diff).toLocaleString("en-IN")}` : `-₹${Math.round(Math.abs(diff)).toLocaleString("en-IN")}`}
+                {isAbove ? `+${formatCurrency(Math.round(diff), "INR", locale)}` : `-${formatCurrency(Math.round(Math.abs(diff)), "INR", locale)}`}
               </span>
             </div>
           </div>

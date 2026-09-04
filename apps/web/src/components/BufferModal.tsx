@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { X, ShieldAlert, AlertCircle, PlusCircle, ArrowDownCircle, Check } from "lucide-react";
 import { BufferStatus } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface BufferModalProps {
   isOpen: boolean;
@@ -19,6 +21,10 @@ export const BufferModal: React.FC<BufferModalProps> = ({
   onClose,
   onSubmit,
 }) => {
+  const t = useTranslations("modals.buffer");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+
   const [amount, setAmount] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -38,7 +44,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
 
     if (isFloorViolated) {
       setErrorMsg(
-        `Withdrawal of ₹${numAmount.toLocaleString("en-IN")} stopped. It would go below your emergency floor of ₹${buffer.minimum_floor.toLocaleString("en-IN")} for rent and food.`
+        `Withdrawal of ${formatCurrency(numAmount, "INR", locale)} stopped. It would go below your emergency floor of ${formatCurrency(buffer.minimum_floor, "INR", locale)} for rent and food.`
       );
       return;
     }
@@ -72,7 +78,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-[#111827]">
-                {isWithdraw ? "Take Out Emergency Money" : "Add Money to Savings"}
+                {isWithdraw ? t("withdrawTitle") : t("depositTitle")}
               </h3>
               <span className="text-[10px] text-[#ff5b45] font-bold uppercase tracking-wider">
                 Sure-Savings Practice Mode
@@ -81,7 +87,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-[#9ca3af] hover:text-[#111827] bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors"
+            className="p-1.5 rounded-xl text-[#9ca3af] hover:text-[#111827] bg-[#f9fafb] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -92,7 +98,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
           <div>
             <span className="text-[#6b7280] text-[11px] block font-medium">Total Saved</span>
             <span className="text-sm font-bold text-[#111827] font-mono">
-              ₹{buffer.current_balance.toLocaleString("en-IN")}
+              {formatCurrency(buffer.current_balance, "INR", locale)}
             </span>
           </div>
           <div>
@@ -100,10 +106,9 @@ export const BufferModal: React.FC<BufferModalProps> = ({
               {isWithdraw ? "Safe to Take Out" : "Left to Reach Goal"}
             </span>
             <span className={`text-sm font-bold font-mono ${isWithdraw ? "text-[#059669]" : "text-[#ff5b45]"}`}>
-              ₹
               {isWithdraw
-                ? buffer.available_safe_buffer.toLocaleString("en-IN")
-                : buffer.buffer_gap.toLocaleString("en-IN")}
+                ? formatCurrency(buffer.available_safe_buffer, "INR", locale)
+                : formatCurrency(buffer.buffer_gap, "INR", locale)}
             </span>
           </div>
         </div>
@@ -112,7 +117,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
           <div className="mb-4 p-3 rounded-2xl bg-[#fffbeb] border border-[#fef3c7] text-[#92400e] text-xs flex items-center space-x-2">
             <ShieldAlert className="w-4 h-4 shrink-0 text-[#d97706]" />
             <span>
-              Emergency Floor: <strong>₹{buffer.minimum_floor.toLocaleString("en-IN")}</strong>. We keep this safe so you always have money for rent and food.
+              Emergency Floor: <strong>{formatCurrency(buffer.minimum_floor, "INR", locale)}</strong>. We keep this safe so you always have money for rent and food.
             </span>
           </div>
         )}
@@ -120,7 +125,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-bold text-[#374151] mb-1">
-              Amount (₹ INR)
+              {t("amountLabel")}
             </label>
             <div className="relative">
               <span className="absolute left-3 top-2.5 text-[#9ca3af] font-semibold text-sm">₹</span>
@@ -145,7 +150,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
                 key={preset}
                 type="button"
                 onClick={() => setAmount(preset.toString())}
-                className="px-2.5 py-0.5 text-[11px] font-bold bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#374151] rounded-lg border border-[#e5e7eb] transition-colors"
+                className="px-2.5 py-0.5 text-[11px] font-bold bg-[#f3f4f6] hover:bg-[#e5e7eb] text-[#374151] rounded-lg border border-[#e5e7eb] transition-colors cursor-pointer"
               >
                 ₹{preset}
               </button>
@@ -163,14 +168,14 @@ export const BufferModal: React.FC<BufferModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-[#f3f4f6] rounded-xl"
+              className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-[#f3f4f6] rounded-xl cursor-pointer"
             >
-              Cancel
+              {tCommon("cancel")}
             </button>
             <button
               type="submit"
               disabled={loading || isFloorViolated}
-              className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-md transition-all flex items-center space-x-1.5 ${
+              className={`px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-md transition-all flex items-center space-x-1.5 cursor-pointer ${
                 isFloorViolated
                   ? "bg-gray-300 opacity-50 cursor-not-allowed text-gray-500"
                   : isWithdraw
@@ -179,7 +184,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
               }`}
             >
               <Check className="w-3.5 h-3.5" />
-              <span>{loading ? "Processing..." : isWithdraw ? "Withdraw Money" : "Add Money"}</span>
+              <span>{loading ? tCommon("processing") : isWithdraw ? t("submitWithdraw") : t("submitDeposit")}</span>
             </button>
           </div>
         </form>

@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { PlusCircle, ArrowDownCircle, Lock, ShieldCheck } from "lucide-react";
 import { BufferStatus } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface BufferCardProps {
   buffer: BufferStatus | null;
@@ -17,18 +19,21 @@ export const BufferCard: React.FC<BufferCardProps> = ({
   onOpenWithdraw,
   isProMode = false,
 }) => {
+  const t = useTranslations("bufferCard");
+  const locale = useLocale();
+
   if (!buffer) {
     return (
       <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
         <div>
           <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-sm font-bold text-[#111827]">Emergency Savings</h3>
+            <h3 className="text-sm font-bold text-[#111827]">{t("title")}</h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
               Starting Out
             </span>
           </div>
           <p className="text-xs text-[#6b7280]">
-            Your backup fund to cover slow or unpaid weeks.
+            {t("subtitle")}
           </p>
           <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
             <span className="text-3xl font-black text-[#9ca3af] font-mono">₹0</span>
@@ -42,7 +47,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           className="w-full py-2.5 text-xs font-bold text-[#059669] bg-[#ecfdf5] hover:bg-[#d1fae5] rounded-xl border border-[#a7f3d0] transition-colors flex items-center justify-center space-x-1 cursor-pointer"
         >
           <PlusCircle className="w-4 h-4" />
-          <span>Start Emergency Savings</span>
+          <span>{t("depositButton")}</span>
         </button>
       </div>
     );
@@ -64,19 +69,19 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-bold text-[#111827]">
-                Emergency Savings
+                {t("title")}
               </h3>
               <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fffbeb] text-[#d97706] border border-[#fef3c7]">
                 {coverageWeeks} Weeks Covered
               </span>
             </div>
-            <p className="text-xs text-[#6b7280] mt-1">Your backup fund to cover slow or unpaid weeks</p>
+            <p className="text-xs text-[#6b7280] mt-1">{t("subtitle")}</p>
           </div>
 
           <div className="text-right">
-            <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">Total Saved</span>
+            <span className="text-[10px] font-bold text-[#9ca3af] uppercase tracking-wider">{t("currentBalance")}</span>
             <div className="text-3xl font-black text-[#111827] tracking-tight font-mono">
-              ₹{currentBalance.toLocaleString("en-IN")}
+              {formatCurrency(currentBalance, "INR", locale)}
             </div>
           </div>
         </div>
@@ -85,9 +90,9 @@ export const BufferCard: React.FC<BufferCardProps> = ({
         <div className="mt-4">
           <div className="flex justify-between text-xs text-[#6b7280] mb-1.5">
             <span>
-              Goal: <strong className="text-[#111827]">₹{targetAmount.toLocaleString("en-IN")}</strong>
+              Goal: <strong className="text-[#111827]">{formatCurrency(targetAmount, "INR", locale)}</strong>
             </span>
-            <span className="font-bold text-[#f59e0b]">{targetPct}% of Goal</span>
+            <span className="font-bold text-[#f59e0b]">{t("fundingProgress", { percent: targetPct })}</span>
           </div>
 
           <div className="relative w-full h-3 bg-[#f3f4f6] rounded-full overflow-hidden border border-[#eae8e3]">
@@ -95,7 +100,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
             <div
               className="absolute top-0 bottom-0 left-0 bg-[#f59e0b]/30 border-r-2 border-[#f59e0b] z-10"
               style={{ width: `${floorPct}%` }}
-              title="Minimum Safe Savings"
+              title={t("protectedFloor")}
             />
             {/* Current balance */}
             <div
@@ -109,10 +114,10 @@ export const BufferCard: React.FC<BufferCardProps> = ({
             <div className="bg-[#fffbeb] p-2.5 rounded-xl border border-[#fef3c7]">
               <div className="flex items-center space-x-1.5 text-[#b45309] mb-0.5">
                 <Lock className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Minimum Safe Savings</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{t("protectedFloor")}</span>
               </div>
               <div className="text-xs font-bold text-[#92400e] font-mono">
-                ₹{minimumFloor.toLocaleString("en-IN")}
+                {formatCurrency(minimumFloor, "INR", locale)}
               </div>
               <span className="text-[10px] text-[#b45309]/80 block mt-0.5">Untouchable for rent & food</span>
             </div>
@@ -120,10 +125,10 @@ export const BufferCard: React.FC<BufferCardProps> = ({
             <div className="bg-[#ecfdf5] p-2.5 rounded-xl border border-[#a7f3d0]">
               <div className="flex items-center space-x-1.5 text-[#047857] mb-0.5">
                 <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Safe to Use</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider">{t("availableToRelease")}</span>
               </div>
               <div className="text-xs font-bold text-[#065f46] font-mono">
-                ₹{safeBuffer.toLocaleString("en-IN")}
+                {formatCurrency(safeBuffer, "INR", locale)}
               </div>
               <span className="text-[10px] text-[#047857]/80 block mt-0.5">Available for emergencies</span>
             </div>
@@ -138,7 +143,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           className="px-3 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#059669] to-[#047857] hover:opacity-95 rounded-xl shadow-sm flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
         >
           <PlusCircle className="w-3.5 h-3.5" />
-          <span>Save Money</span>
+          <span>{t("depositButton")}</span>
         </button>
 
         <button
@@ -147,7 +152,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           className="px-3 py-2 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] flex items-center justify-center space-x-1.5 transition-all disabled:opacity-40 cursor-pointer"
         >
           <ArrowDownCircle className="w-3.5 h-3.5" />
-          <span>Use Cushion</span>
+          <span>{t("withdrawButton")}</span>
         </button>
       </div>
     </div>

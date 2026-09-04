@@ -1,20 +1,21 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { Navbar } from "../../components/Navbar";
-import { CalendarSummaryCards } from "../../components/calendar/CalendarSummaryCards";
-import { CashFlowCalendar } from "../../components/calendar/CashFlowCalendar";
-import { DayInspector } from "../../components/calendar/DayInspector";
-import { CashPressureView } from "../../components/calendar/CashPressureView";
-import { UpcomingBillsListView } from "../../components/calendar/UpcomingBillsListView";
-import { ObligationModal } from "../../components/calendar/ObligationModal";
-import { CalendarEmptyState } from "../../components/calendar/CalendarEmptyState";
-import { AddTransactionModal } from "../../components/AddTransactionModal";
-import { BufferModal } from "../../components/BufferModal";
-import { MoneyAllocationModal } from "../../components/MoneyAllocationModal";
-import { AuthModal } from "../../components/AuthModal";
-import { AiDrawer } from "../../components/AiDrawer";
-import { HowItWorksModal } from "../../components/HowItWorksModal";
+import { useTranslations } from "next-intl";
+import { Navbar } from "@/components/Navbar";
+import { CalendarSummaryCards } from "@/components/calendar/CalendarSummaryCards";
+import { CashFlowCalendar } from "@/components/calendar/CashFlowCalendar";
+import { DayInspector } from "@/components/calendar/DayInspector";
+import { CashPressureView } from "@/components/calendar/CashPressureView";
+import { UpcomingBillsListView } from "@/components/calendar/UpcomingBillsListView";
+import { ObligationModal } from "@/components/calendar/ObligationModal";
+import { CalendarEmptyState } from "@/components/calendar/CalendarEmptyState";
+import { AddTransactionModal } from "@/components/AddTransactionModal";
+import { BufferModal } from "@/components/BufferModal";
+import { MoneyAllocationModal } from "@/components/MoneyAllocationModal";
+import { AuthModal } from "@/components/AuthModal";
+import { AiDrawer } from "@/components/AiDrawer";
+import { HowItWorksModal } from "@/components/HowItWorksModal";
 
 import {
   CalendarMonthData,
@@ -24,8 +25,8 @@ import {
   AuthUser,
   BufferStatus,
   AllocationPlan,
-} from "../../lib/types";
-import { api, getAuthToken, setAuthToken, setDemoMode, getIsDemoMode } from "../../lib/api";
+} from "@/lib/types";
+import { api, getAuthToken, setAuthToken, setDemoMode, getIsDemoMode } from "@/lib/api";
 
 import {
   ChevronLeft,
@@ -38,6 +39,10 @@ import {
 } from "lucide-react";
 
 export default function CalendarPage() {
+  const tCal = useTranslations("calendar");
+  const tNav = useTranslations("navigation");
+  const tCommon = useTranslations("common");
+
   const now = new Date();
   const [year, setYear] = useState<number>(now.getFullYear());
   const [month, setMonth] = useState<number>(now.getMonth() + 1);
@@ -231,7 +236,7 @@ export default function CalendarPage() {
             <div className="flex items-center space-x-2 text-[#9a3412]">
               <Lock className="w-4 h-4 text-[#ff5b45] shrink-0" />
               <span>
-                You are currently previewing in read-only mode. <strong>Sign in</strong> or activate a demo persona to save bills and see your personalized safety status.
+                You are currently previewing in read-only mode. <strong>{tNav("signIn")}</strong> or activate a demo persona to save bills and see your personalized safety status.
               </span>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
@@ -239,13 +244,13 @@ export default function CalendarPage() {
                 onClick={() => setAuthModalOpen(true)}
                 className="px-3 py-1.5 font-bold text-white bg-[#ff5b45] hover:bg-[#e04835] rounded-xl shadow-xs transition-all cursor-pointer"
               >
-                Sign In / Register
+                {tNav("signInRegister")}
               </button>
               <button
                 onClick={handleActivateDemoMode}
                 className="px-3 py-1.5 font-bold text-[#ff5b45] bg-white border border-[#ffdad4] hover:bg-[#fff0ed] rounded-xl transition-all cursor-pointer"
               >
-                Try Demo Sandbox
+                {tNav("demoUser")}
               </button>
             </div>
           </div>
@@ -255,14 +260,14 @@ export default function CalendarPage() {
       {/* Main Page Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         
-        {/* Page Top Header - Cleaned and friendly */}
+        {/* Page Top Header */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black text-[#111827] tracking-tight">
-              Upcoming Bills & Cash Calendar
+              {tCal("pageTitle")}
             </h1>
             <p className="text-xs sm:text-sm text-[#6b7280] font-medium mt-1">
-              Track rent and upcoming bills so you know well in advance if your money is covered.
+              {tCal("pageSubtitle")}
             </p>
           </div>
 
@@ -305,7 +310,7 @@ export default function CalendarPage() {
               className="px-4 py-2 text-xs font-bold text-white bg-[#7c3aed] hover:bg-[#6d28d9] rounded-2xl flex items-center space-x-1.5 shadow-sm transition-all cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Add Bill</span>
+              <span>{tCal("addObligation")}</span>
             </button>
           </div>
         </div>
@@ -320,7 +325,7 @@ export default function CalendarPage() {
                 : "bg-white text-[#6b7280] hover:text-[#111827] border border-[#eae8e3]"
             }`}
           >
-            Upcoming Bills List
+            {tCal("upcomingBills")}
           </button>
 
           <button
@@ -331,7 +336,7 @@ export default function CalendarPage() {
                 : "bg-white text-[#6b7280] hover:text-[#111827] border border-[#eae8e3]"
             }`}
           >
-            Monthly Calendar
+            {tCal("monthView")}
           </button>
 
           {/* Money Tightness Tab: ONLY shown if a risk/tightness day is detected */}
@@ -345,7 +350,7 @@ export default function CalendarPage() {
               }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
-              <span>Money Tightness</span>
+              <span>{tCal("warningZone")}</span>
               <span className="w-2 h-2 rounded-full bg-[#e11d48] animate-pulse" />
             </button>
           )}
@@ -369,7 +374,7 @@ export default function CalendarPage() {
               className="px-4 py-2 bg-white text-xs font-bold text-[#e11d48] border border-[#fecdd3] rounded-xl hover:bg-[#ffe4e6] inline-flex items-center space-x-1.5 cursor-pointer"
             >
               <RotateCw className="w-3.5 h-3.5" />
-              <span>Retry</span>
+              <span>{tCommon("retry")}</span>
             </button>
           </div>
         )}

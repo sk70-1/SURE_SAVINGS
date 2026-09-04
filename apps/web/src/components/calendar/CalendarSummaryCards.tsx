@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
-import { TrendingUp, ArrowDownLeft, ArrowUpRight, AlertTriangle, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { useLocale } from "next-intl";
+import { ArrowDownLeft, ArrowUpRight, AlertTriangle, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { CalendarMonthSummary } from "../../lib/types";
+import { formatCurrency, formatDate } from "../../lib/formatters";
 
 interface CalendarSummaryCardsProps {
   summary: CalendarMonthSummary | null;
@@ -15,19 +17,15 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
   currency = "INR",
   onOpenBufferModal,
 }) => {
+  const locale = useLocale();
+
   const formatMoney = (val: number) => {
-    const symbol = currency === "INR" ? "₹" : "$";
-    return `${symbol}${Math.round(val || 0).toLocaleString(currency === "INR" ? "en-IN" : "en-US")}`;
+    return formatCurrency(val, currency, locale);
   };
 
   const formatGapDate = (dateStr?: string | null) => {
     if (!dateStr) return "No critical gap";
-    try {
-      const d = new Date(dateStr + "T00:00:00");
-      return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-    } catch {
-      return dateStr;
-    }
+    return formatDate(dateStr, locale);
   };
 
   const hasCriticalGap = summary && summary.critical_gap_date && summary.critical_gap_amount > 0;

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Sparkles,
   ArrowRight,
@@ -10,6 +11,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { Recommendation, BufferStatus, AllocationPlan, IncomeAnalytics } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface TodaysMoneyPlanCardProps {
   recommendations: Recommendation[];
@@ -36,6 +38,9 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
   onOpenEditPlan,
   onOpenAddTransaction,
 }) => {
+  const t = useTranslations("moneyPlan");
+  const locale = useLocale();
+
   const [whyExpanded, setWhyExpanded] = useState(false);
   const [isActing, setIsActing] = useState(false);
 
@@ -52,11 +57,11 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
   let statusBadge = "Safe this week";
   let statusBadgeStyle = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
   let headline = "You are safe this week";
-  let recommendedAction = "Save ₹1,000";
+  let recommendedAction = `Save ${formatCurrency(1000, "INR", locale)}`;
   let amount = 1000;
   let reason = "Your upcoming bills are covered, and you still have plenty left for daily expenses.";
-  let impact = `You will still have ₹${Math.round(safeToSpend).toLocaleString("en-IN")} available for food, petrol, and daily spending.`;
-  let ctaLabel = "Save ₹1,000 to Emergency Savings";
+  let impact = `You will still have ${formatCurrency(safeToSpend, "INR", locale)} available for food, petrol, and daily spending.`;
+  let ctaLabel = `Save ${formatCurrency(1000, "INR", locale)} to Emergency Savings`;
   let ctaType: CtaAction = "DEPOSIT";
   let whyDetails = [
     "Your essential expenses and upcoming bills are already secured.",
@@ -70,13 +75,13 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
       statusBadge = "Good Week! Extra Income";
       statusBadgeStyle = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
       headline = "You have extra earnings this week";
-      recommendedAction = `Set aside ₹${amount.toLocaleString("en-IN")}`;
+      recommendedAction = `Set aside ${formatCurrency(amount, "INR", locale)}`;
       reason = pendingRec.why || "Your upcoming bills are secured, making this a safe time to build your emergency savings.";
-      impact = `After saving ₹${amount.toLocaleString("en-IN")}, you will still have ₹${Math.round(safeToSpend).toLocaleString("en-IN")} for daily living.`;
-      ctaLabel = `Save ₹${amount.toLocaleString("en-IN")} to Emergency Savings`;
+      impact = `After saving ${formatCurrency(amount, "INR", locale)}, you will still have ${formatCurrency(safeToSpend, "INR", locale)} for daily living.`;
+      ctaLabel = `Save ${formatCurrency(amount, "INR", locale)} to Emergency Savings`;
       ctaType = "APPROVE_REC";
       whyDetails = [
-        `Your recent income (₹${Math.round(analytics?.recent_actual_income || 0).toLocaleString("en-IN")}) exceeded your weekly baseline.`,
+        `Your recent income (${formatCurrency(analytics?.recent_actual_income || 0, "INR", locale)}) exceeded your weekly baseline.`,
         "This recommendation leaves your essential bills and living costs fully funded.",
         "Your emergency savings will stay protected for when gig demand slows down.",
       ];
@@ -84,14 +89,14 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
       statusBadge = "Slow Week";
       statusBadgeStyle = "bg-[#fffbeb] text-[#d97706] border-[#fef3c7]";
       headline = "Use your emergency savings to cover bills";
-      recommendedAction = `Draw ₹${amount.toLocaleString("en-IN")} from savings`;
+      recommendedAction = `Draw ${formatCurrency(amount, "INR", locale)} from savings`;
       reason = pendingRec.why || "Income is lower than usual this week. Your emergency savings are here exactly for this.";
       impact = `This safely covers your essential bills without missing payments or taking high-cost loans.`;
-      ctaLabel = `Use ₹${amount.toLocaleString("en-IN")} from Savings`;
+      ctaLabel = `Use ${formatCurrency(amount, "INR", locale)} from Savings`;
       ctaType = "APPROVE_REC";
       whyDetails = [
         "Your emergency savings are meant to smooth out slow or unpaid weeks.",
-        `Drawing ₹${amount.toLocaleString("en-IN")} keeps you above your minimum safe floor.`,
+        `Drawing ${formatCurrency(amount, "INR", locale)} keeps you above your minimum safe floor.`,
         "You can replenish your cushion once payouts pick back up.",
       ];
     } else if (pendingRec.type === "PROTECT_BUFFER" || pendingRec.type === "HOLD_CASH") {
@@ -111,10 +116,10 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
     }
   } else if (allocationPlan && allocationPlan.breakdown.protected_buffer > 0) {
     amount = Math.round(allocationPlan.breakdown.protected_buffer);
-    recommendedAction = `Save ₹${amount.toLocaleString("en-IN")}`;
+    recommendedAction = `Save ${formatCurrency(amount, "INR", locale)}`;
     reason = "Your planned weekly allocation recommends stashing this amount to keep your cushion on track.";
-    impact = `You will still have ₹${Math.round(safeToSpend).toLocaleString("en-IN")} for daily spending.`;
-    ctaLabel = `Save ₹${amount.toLocaleString("en-IN")} to Emergency Savings`;
+    impact = `You will still have ${formatCurrency(safeToSpend, "INR", locale)} for daily spending.`;
+    ctaLabel = `Save ${formatCurrency(amount, "INR", locale)} to Emergency Savings`;
     ctaType = "DEPOSIT";
   }
 
@@ -144,7 +149,7 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
 
   return (
     <section className="bg-gradient-to-br from-white via-[#fffdfc] to-[#fff7f5] border border-[#ffdad4] rounded-3xl p-6 sm:p-8 shadow-sm relative overflow-hidden transition-all">
-      {/* Decorative calm background glow */}
+      {/* Decorative background glow */}
       <div className="absolute -top-12 -right-12 w-56 h-56 bg-gradient-to-bl from-[#ff5b45]/10 via-[#f59e0b]/5 to-transparent rounded-full blur-2xl pointer-events-none" />
 
       {/* Top row: Label and status badge */}
@@ -155,9 +160,9 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
           </div>
           <div>
             <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#ff5b45]">
-              Today's Money Plan
+              {t("title")}
             </span>
-            <span className="text-xs text-[#6b7280] block font-medium">Your daily recommendation</span>
+            <span className="text-xs text-[#6b7280] block font-medium">{t("subtitle")}</span>
           </div>
         </div>
 

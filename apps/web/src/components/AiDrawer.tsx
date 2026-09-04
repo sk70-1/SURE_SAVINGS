@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations } from "next-intl";
 import { X, Sparkles, Send, ShieldAlert, Code2, User, Bot } from "lucide-react";
 import { api } from "../lib/api";
 
@@ -16,6 +17,9 @@ interface AiDrawerProps {
 }
 
 export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
+  const t = useTranslations("modals.aiDrawer");
+  const tCommon = useTranslations("common");
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -82,10 +86,10 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h3 className="text-sm font-bold text-[#111827] flex items-center space-x-1.5">
-                <span>Sure-Savings Assistant</span>
+                <span>{t("title")}</span>
                 <span className="w-2 h-2 rounded-full bg-[#10b981]"></span>
               </h3>
-              <p className="text-[11px] text-[#6b7280]">Explains facts about your savings and income</p>
+              <p className="text-[11px] text-[#6b7280]">{t("subtitle")}</p>
             </div>
           </div>
 
@@ -93,7 +97,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
             {lastContext && (
               <button
                 onClick={() => setShowContext(!showContext)}
-                className="p-1.5 rounded-lg bg-[#f3f4f6] text-[#4b5563] hover:text-[#111827] border border-[#eae8e3] transition-colors"
+                className="p-1.5 rounded-lg bg-[#f3f4f6] text-[#4b5563] hover:text-[#111827] border border-[#eae8e3] transition-colors cursor-pointer"
                 title="Inspect Grounded Fact Sheet"
               >
                 <Code2 className="w-4 h-4" />
@@ -101,7 +105,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
             )}
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
+              className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
@@ -120,7 +124,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
             <div className="flex items-center justify-between text-[#6b7280] mb-2">
               <span className="font-bold text-[#ff5b45]">Grounded Fact Sheet</span>
               <button onClick={() => setShowContext(false)} className="text-[11px] hover:text-[#111827]">
-                Close
+                {tCommon("close")}
               </button>
             </div>
             <pre className="text-[10px] text-[#4b5563] whitespace-pre-wrap">
@@ -159,7 +163,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
           {loading && (
             <div className="flex items-center space-x-2 text-[#6b7280] text-xs p-3">
               <Sparkles className="w-4 h-4 text-[#ff5b45] animate-spin" />
-              <span>Looking up your numbers...</span>
+              <span>{tCommon("loading")}</span>
             </div>
           )}
         </div>
@@ -172,7 +176,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
               <button
                 key={idx}
                 onClick={() => handleSend(p)}
-                className="text-[11px] bg-[#f9fafb] hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] px-2.5 py-1 rounded-lg border border-[#eae8e3] transition-all text-left shadow-sm"
+                className="text-[11px] bg-[#f9fafb] hover:bg-[#f3f4f6] text-[#374151] hover:text-[#111827] px-2.5 py-1 rounded-lg border border-[#eae8e3] transition-all text-left shadow-sm cursor-pointer"
               >
                 {p}
               </button>
@@ -193,13 +197,13 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask anything about your savings, pay, or advice..."
+              placeholder={t("placeholder")}
               className="flex-1 bg-[#fbfbfa] text-xs text-[#111827] px-3.5 py-2.5 rounded-xl border border-[#eae8e3] focus:outline-none focus:ring-1 focus:ring-[#ff5b45]"
             />
             <button
               type="submit"
               disabled={loading || !input.trim()}
-              className="p-2.5 rounded-xl bg-gradient-to-r from-[#ff5b45] to-[#f05138] text-white disabled:opacity-50 transition-all shadow-md shadow-[#ff5b45]/30 active:scale-95"
+              className="p-2.5 rounded-xl bg-gradient-to-r from-[#ff5b45] to-[#f05138] text-white disabled:opacity-50 transition-all shadow-md shadow-[#ff5b45]/30 active:scale-95 cursor-pointer"
             >
               <Send className="w-4 h-4" />
             </button>

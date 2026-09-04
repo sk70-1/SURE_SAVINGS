@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { ShieldCheck, HeartHandshake, HelpCircle } from "lucide-react";
 import { ResilienceScore } from "../lib/types";
 
@@ -10,19 +11,21 @@ interface ResilienceGaugeProps {
 }
 
 export const ResilienceGauge: React.FC<ResilienceGaugeProps> = ({ resilience, isProMode = false }) => {
+  const t = useTranslations("resilienceGauge");
+
   // If no score exists yet
   if (!resilience) {
     return (
       <div className="bg-white rounded-3xl p-6 border border-[#eae8e3] flex flex-col justify-between shadow-sm">
         <div>
           <div className="flex items-center space-x-2 mb-2">
-            <h3 className="text-sm font-bold text-[#111827]">Your Money Safety</h3>
+            <h3 className="text-sm font-bold text-[#111827]">{t("title")}</h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
               New Account
             </span>
           </div>
           <p className="text-xs text-[#6b7280]">
-            How ready you are for slow or unpaid weeks.
+            {t("subtitle")}
           </p>
           <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
             <span className="text-3xl font-black text-[#9ca3af] font-mono">— / 100</span>
@@ -38,28 +41,28 @@ export const ResilienceGauge: React.FC<ResilienceGaugeProps> = ({ resilience, is
   const score = Math.round(resilience.overall_score);
 
   // Friendly human rating
-  let ratingText = "Healthy";
+  let ratingText = t("scoreGood");
   let scoreColor = "text-[#059669]";
   let bgBadge = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
   let friendlyAdvice = "Great shape! Your savings can easily handle slow work weeks.";
 
   if (score < 40) {
-    ratingText = "Needs Care";
+    ratingText = t("scoreAtRisk");
     scoreColor = "text-[#e11d48]";
     bgBadge = "bg-[#fff1f2] text-[#e11d48] border-[#fecdd3]";
     friendlyAdvice = "Your savings are low right now. Try to save small amounts during good weeks.";
   } else if (score < 60) {
-    ratingText = "Fair Cushion";
+    ratingText = t("scoreFair");
     scoreColor = "text-[#d97706]";
     bgBadge = "bg-[#fffbeb] text-[#d97706] border-[#fef3c7]";
     friendlyAdvice = "Decent stability. Adding a little more will give you total peace of mind.";
   } else if (score < 80) {
-    ratingText = "Strong Cushion";
+    ratingText = t("scoreGood");
     scoreColor = "text-[#059669]";
     bgBadge = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
     friendlyAdvice = "Good cushion! You can absorb slower gig periods without stress.";
   } else {
-    ratingText = "Very Secure";
+    ratingText = t("scoreExcellent");
     scoreColor = "text-[#059669]";
     bgBadge = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
     friendlyAdvice = "Outstanding! You have multiple weeks of essential expenses saved.";
@@ -72,13 +75,13 @@ export const ResilienceGauge: React.FC<ResilienceGaugeProps> = ({ resilience, is
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-bold text-[#111827]">
-                Your Money Safety
+                {t("title")}
               </h3>
               <span className={`px-2.5 py-0.5 text-xs font-bold rounded-full border ${bgBadge}`}>
                 {ratingText}
               </span>
             </div>
-            <p className="text-xs text-[#6b7280] mt-1">How ready you are for slow or unpaid weeks</p>
+            <p className="text-xs text-[#6b7280] mt-1">{t("subtitle")}</p>
           </div>
 
           <div className="text-right">
@@ -109,7 +112,7 @@ export const ResilienceGauge: React.FC<ResilienceGaugeProps> = ({ resilience, is
         {/* 4 Pillars in Simple Terms */}
         <div className="grid grid-cols-2 gap-2 text-xs">
           <div className="bg-[#fbfbfa] p-2.5 rounded-xl border border-[#eae8e3]">
-            <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block">Income Regularity</span>
+            <span className="text-[10px] text-[#6b7280] uppercase tracking-wider block">{t("stability")}</span>
             <span className="font-bold text-[#111827] font-mono">
               {Math.round(resilience.income_stability)}%
             </span>

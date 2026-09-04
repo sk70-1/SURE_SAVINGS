@@ -23,8 +23,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content:
-        "Hello! I am your Sure-Savings Assistant. I'm here to explain how your savings advice, normal weekly pay, and emergency floor work. I only explain facts—I cannot move money without your explicit button click.",
+      content: t("assistantIntro"),
     },
   ]);
   const [input, setInput] = useState("");
@@ -59,7 +58,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
         ...prev,
         {
           role: "assistant",
-          content: "Sorry, I had trouble retrieving your savings numbers. Please check if the server is running.",
+          content: t("troubleRetrieving"),
         },
       ]);
     } finally {
@@ -68,10 +67,10 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
   };
 
   const samplePrompts = [
-    "Why is saving ₹900 recommended this week?",
-    "How is my Financial Safety Score calculated?",
-    "What is my Emergency Floor?",
-    "Can you transfer ₹5,000 to my bank account?",
+    t("prompt1"),
+    t("prompt2"),
+    t("prompt3"),
+    t("prompt4"),
   ];
 
   return (
@@ -115,14 +114,14 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
         {/* Safety Boundary Banner */}
         <div className="px-4 py-2 bg-[#fff5f3] border-b border-[#ffdad4] text-[11px] text-[#b91c1c] flex items-center space-x-2 font-medium">
           <ShieldAlert className="w-3.5 h-3.5 text-[#ff5b45] shrink-0" />
-          <span>Explains Your Numbers Only • Cannot Move Real Money Autonomously</span>
+          <span>{t("safetyBanner")}</span>
         </div>
 
         {/* Context Inspector Drawer Overlay */}
         {showContext && lastContext && (
           <div className="bg-[#fbfbfa] p-4 border-b border-[#eae8e3] text-xs text-[#374151] max-h-48 overflow-y-auto font-mono">
             <div className="flex items-center justify-between text-[#6b7280] mb-2">
-              <span className="font-bold text-[#ff5b45]">Grounded Fact Sheet</span>
+              <span className="font-bold text-[#ff5b45]">{t("groundedFactSheet")}</span>
               <button onClick={() => setShowContext(false)} className="text-[11px] hover:text-[#111827]">
                 {tCommon("close")}
               </button>
@@ -170,7 +169,7 @@ export const AiDrawer: React.FC<AiDrawerProps> = ({ isOpen, onClose }) => {
 
         {/* Suggested Queries */}
         <div className="p-3 border-t border-[#eae8e3] bg-white">
-          <span className="text-[10px] text-[#6b7280] block mb-1.5 font-bold uppercase tracking-wider">Helpful questions:</span>
+          <span className="text-[10px] text-[#6b7280] block mb-1.5 font-bold uppercase tracking-wider">{t("helpfulQuestions")}</span>
           <div className="flex flex-wrap gap-1.5">
             {samplePrompts.map((p, idx) => (
               <button

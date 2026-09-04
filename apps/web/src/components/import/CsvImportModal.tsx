@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
-  X, UploadCloud, FileText, Check, AlertTriangle, ArrowRight,
-  Sparkles, CheckCircle2, Download, RefreshCw, Filter, ShieldCheck, Tag
+  X, UploadCloud, FileText, AlertTriangle, ArrowRight,
+  CheckCircle2, Download, RefreshCw
 } from "lucide-react";
 import { api } from "../../lib/api";
 import { CsvPreviewItem, CsvPreviewResponse, CategoryMetadata } from "../../lib/types";
+import { formatCurrency } from "../../lib/formatters";
 
 interface CsvImportModalProps {
   isOpen: boolean;
@@ -21,6 +23,9 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
   onImportComplete,
   currency = "INR",
 }) => {
+  const t = useTranslations("csvImport");
+  const locale = useLocale();
+
   const [step, setStep] = useState<"UPLOAD" | "PREVIEW" | "SUCCESS">("UPLOAD");
   const [file, setFile] = useState<File | null>(null);
   const [dragActive, setDragActive] = useState(false);
@@ -41,8 +46,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const formatMoney = (val: number) => {
-    const symbol = currency === "INR" ? "₹" : "$";
-    return `${symbol}${Math.round(val || 0).toLocaleString(currency === "INR" ? "en-IN" : "en-US")}`;
+    return formatCurrency(val, currency, locale);
   };
 
   // Load available category metadata
@@ -207,16 +211,16 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-[#111827]">
-                Import Statement CSV
+                {t("modalTitle")}
               </h3>
               <p className="text-xs text-[#6b7280]">
-                Auto-categorize bank, UPI, and gig platform statements with duplicate detection.
+                {t("modalSubtitle")}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
+            className="p-2 rounded-xl text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -268,15 +272,15 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                   <FileText className="w-7 h-7" />
                 </div>
                 <h4 className="text-sm font-extrabold text-[#111827]">
-                  {loading ? "Parsing statement with smart categorization..." : "Drop your bank or platform CSV here"}
+                  {loading ? t("dropzoneLoading") : t("dropzoneTitle")}
                 </h4>
                 <p className="text-xs text-[#6b7280] mt-1 max-w-sm mx-auto">
-                  or click to browse your computer. Supports HDFC, SBI, ICICI, PhonePe, GPay, Blinkit, and Zomato exports.
+                  {t("dropzoneDesc")}
                 </p>
                 {loading && (
                   <div className="mt-4 inline-flex items-center space-x-2 text-xs font-bold text-[#ff5b45]">
                     <RefreshCw className="w-4 h-4 animate-spin" />
-                    <span>Analyzing merchant patterns & detecting duplicates...</span>
+                    <span>{t("analyzingNotice")}</span>
                   </div>
                 )}
               </div>
@@ -284,24 +288,24 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               {/* Supported Platforms Grid */}
               <div className="space-y-2">
                 <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-                  Supported Formats & Auto-Detection
+                  {t("supportedFormats")}
                 </span>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-semibold text-[#4b5563]">
                   <div className="p-2.5 rounded-xl bg-[#fbfbfa] border border-[#eae8e3] flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-[#059669]" />
-                    <span>Bank Debit/Credit</span>
+                    <span>{t("formatBank")}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#fbfbfa] border border-[#eae8e3] flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-[#0284c7]" />
-                    <span>UPI Statement</span>
+                    <span>{t("formatUpi")}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#fbfbfa] border border-[#eae8e3] flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-[#7c3aed]" />
-                    <span>Blinkit / Zomato</span>
+                    <span>{t("formatGig")}</span>
                   </div>
                   <div className="p-2.5 rounded-xl bg-[#fbfbfa] border border-[#eae8e3] flex items-center space-x-2">
                     <span className="w-2 h-2 rounded-full bg-[#ea580c]" />
-                    <span>Upwork / Freelance</span>
+                    <span>{t("formatFreelance")}</span>
                   </div>
                 </div>
               </div>
@@ -309,17 +313,17 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               {/* Sample Template Link */}
               <div className="p-4 rounded-2xl bg-[#fafaf9] border border-[#eae8e3] flex items-center justify-between">
                 <div>
-                  <div className="text-xs font-bold text-[#111827]">Don&apos;t have a file ready?</div>
+                  <div className="text-xs font-bold text-[#111827]">{t("sampleTitle")}</div>
                   <div className="text-[11px] text-[#6b7280]">
-                    Download our sample bank and gig payout statement to test categorization.
+                    {t("sampleDesc")}
                   </div>
                 </div>
                 <button
                   onClick={handleDownloadSample}
-                  className="px-3 py-1.5 text-xs font-bold text-[#ff5b45] hover:text-[#e04835] bg-white border border-[#ffdad4] hover:bg-[#fff5f3] rounded-xl flex items-center space-x-1.5 transition-colors shadow-2xs"
+                  className="px-3 py-1.5 text-xs font-bold text-[#ff5b45] hover:text-[#e04835] bg-white border border-[#ffdad4] hover:bg-[#fff5f3] rounded-xl flex items-center space-x-1.5 transition-colors shadow-2xs cursor-pointer"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download Sample CSV</span>
+                  <span>{t("downloadSample")}</span>
                 </button>
               </div>
 
@@ -333,24 +337,24 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               {/* Summary KPIs */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl bg-[#fafaf9] border border-[#eae8e3]">
-                  <div className="text-[10px] font-extrabold uppercase text-[#6b7280]">Total Parsed</div>
-                  <div className="text-lg font-black text-[#111827] mt-0.5">{previewData.total_rows} items</div>
+                  <div className="text-[10px] font-extrabold uppercase text-[#6b7280]">{t("totalParsed")}</div>
+                  <div className="text-lg font-black text-[#111827] mt-0.5">{previewData.total_rows}</div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#ecfdf5] border border-[#a7f3d0]">
-                  <div className="text-[10px] font-extrabold uppercase text-[#059669]">Inflows Detected</div>
+                  <div className="text-[10px] font-extrabold uppercase text-[#059669]">{t("inflowsDetected")}</div>
                   <div className="text-lg font-black text-[#059669] mt-0.5">+{formatMoney(previewData.total_inflow)}</div>
                 </div>
 
                 <div className="p-3 rounded-xl bg-[#fff7ed] border border-[#fed7aa]">
-                  <div className="text-[10px] font-extrabold uppercase text-[#ea580c]">Outflows Detected</div>
+                  <div className="text-[10px] font-extrabold uppercase text-[#ea580c]">{t("outflowsDetected")}</div>
                   <div className="text-lg font-black text-[#ea580c] mt-0.5">-{formatMoney(previewData.total_outflow)}</div>
                 </div>
 
                 <div className={`p-3 rounded-xl border ${
                   previewData.duplicate_rows > 0 ? "bg-[#fff5f5] border-[#fecdd3]" : "bg-[#fafaf9] border-[#eae8e3]"
                 }`}>
-                  <div className="text-[10px] font-extrabold uppercase text-[#6b7280]">Duplicates Flagged</div>
+                  <div className="text-[10px] font-extrabold uppercase text-[#6b7280]">{t("duplicatesFlagged")}</div>
                   <div className={`text-lg font-black mt-0.5 ${
                     previewData.duplicate_rows > 0 ? "text-[#e11d48]" : "text-[#111827]"
                   }`}>
@@ -364,22 +368,22 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 <div className="flex items-center space-x-2 text-xs">
                   <button
                     onClick={() => handleToggleSelectAll(true)}
-                    className="font-bold text-[#ff5b45] hover:underline"
+                    className="font-bold text-[#ff5b45] hover:underline cursor-pointer"
                   >
-                    Select All
+                    {t("selectAll")}
                   </button>
                   <span className="text-[#d1d5db]">|</span>
                   <button
                     onClick={() => handleToggleSelectAll(false)}
-                    className="font-medium text-[#6b7280] hover:text-[#111827]"
+                    className="font-medium text-[#6b7280] hover:text-[#111827] cursor-pointer"
                   >
-                    Deselect All
+                    {t("deselectAll")}
                   </button>
                   {previewData.duplicate_rows > 0 && (
                     <>
                       <span className="text-[#d1d5db]">|</span>
                       <span className="text-[11px] text-[#e11d48] font-semibold">
-                        Duplicates unchecked by default
+                        {t("duplicatesUnchecked")}
                       </span>
                     </>
                   )}
@@ -389,36 +393,36 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 <div className="flex items-center space-x-1 text-xs font-semibold">
                   <button
                     onClick={() => setFilterType("ALL")}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                       filterType === "ALL" ? "bg-[#111827] text-white" : "bg-[#f3f4f6] text-[#6b7280]"
                     }`}
                   >
-                    All ({items.length})
+                    {t("filterAll")} ({items.length})
                   </button>
                   <button
                     onClick={() => setFilterType("INCOME")}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                       filterType === "INCOME" ? "bg-[#059669] text-white" : "bg-[#f3f4f6] text-[#6b7280]"
                     }`}
                   >
-                    Inflows
+                    {t("filterInflows")}
                   </button>
                   <button
                     onClick={() => setFilterType("EXPENSE")}
-                    className={`px-2.5 py-1 rounded-lg transition-all ${
+                    className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                       filterType === "EXPENSE" ? "bg-[#ea580c] text-white" : "bg-[#f3f4f6] text-[#6b7280]"
                     }`}
                   >
-                    Outflows
+                    {t("filterOutflows")}
                   </button>
                   {previewData.duplicate_rows > 0 && (
                     <button
                       onClick={() => setFilterType("DUPLICATES")}
-                      className={`px-2.5 py-1 rounded-lg transition-all ${
+                      className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
                         filterType === "DUPLICATES" ? "bg-[#e11d48] text-white" : "bg-[#f3f4f6] text-[#6b7280]"
                       }`}
                     >
-                      Duplicates ({previewData.duplicate_rows})
+                      {t("filterDuplicates")} ({previewData.duplicate_rows})
                     </button>
                   )}
                 </div>
@@ -430,12 +434,12 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                   <table className="w-full text-left text-xs border-collapse">
                     <thead className="bg-[#fafaf9] border-b border-[#eae8e3] sticky top-0 z-10 text-[10px] font-extrabold uppercase text-[#6b7280]">
                       <tr>
-                        <th className="p-3 w-10 text-center">Import</th>
-                        <th className="p-3 w-28">Date</th>
-                        <th className="p-3">Narration & Clean Title</th>
-                        <th className="p-3 w-28 text-right">Amount</th>
-                        <th className="p-3 w-40">Category</th>
-                        <th className="p-3 w-20 text-center">Essential</th>
+                        <th className="p-3 w-10 text-center">{t("colImport")}</th>
+                        <th className="p-3 w-28">{t("colDate")}</th>
+                        <th className="p-3">{t("colNarration")}</th>
+                        <th className="p-3 w-28 text-right">{t("colAmount")}</th>
+                        <th className="p-3 w-40">{t("colCategory")}</th>
+                        <th className="p-3 w-20 text-center">{t("colEssential")}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#f3f4f6]">
@@ -473,7 +477,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                               </span>
                               {it.is_duplicate && (
                                 <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-[#ffe4e6] text-[#e11d48] shrink-0">
-                                  Duplicate
+                                  {t("duplicateBadge")}
                                 </span>
                               )}
                             </div>
@@ -532,21 +536,20 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h4 className="text-xl font-black text-[#111827]">
-                Import Completed Successfully!
+                {t("successTitle")}
               </h4>
               <p className="text-xs text-[#6b7280] max-w-sm mx-auto leading-relaxed">
-                Ingested <strong>{importedSummary.count} transactions</strong> into your account.
-                Your income forecast, safe buffer calculations, and cash flow calendar have been updated automatically.
+                {t("successDesc", { count: importedSummary.count })}
               </p>
 
               <div className="flex items-center justify-center space-x-6 text-xs pt-2">
                 <div>
-                  <span className="text-[#6b7280] block text-[10px] uppercase font-bold">Total Inflows</span>
+                  <span className="text-[#6b7280] block text-[10px] uppercase font-bold">{t("totalInflows")}</span>
                   <span className="font-black text-[#059669] text-base">+{formatMoney(importedSummary.inflow)}</span>
                 </div>
                 <div className="w-px h-8 bg-[#eae8e3]" />
                 <div>
-                  <span className="text-[#6b7280] block text-[10px] uppercase font-bold">Total Outflows</span>
+                  <span className="text-[#6b7280] block text-[10px] uppercase font-bold">{t("totalOutflows")}</span>
                   <span className="font-black text-[#ea580c] text-base">-{formatMoney(importedSummary.outflow)}</span>
                 </div>
               </div>
@@ -554,9 +557,9 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
               <div className="pt-4">
                 <button
                   onClick={onClose}
-                  className="px-6 py-2.5 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-md shadow-[#ff5b45]/20"
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-md shadow-[#ff5b45]/20 cursor-pointer"
                 >
-                  Done
+                  {t("done")}
                 </button>
               </div>
             </div>
@@ -572,28 +575,28 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 setStep("UPLOAD");
                 setFile(null);
               }}
-              className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-white border border-[#eae8e3] rounded-xl hover:bg-[#f3f4f6] transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-white border border-[#eae8e3] rounded-xl hover:bg-[#f3f4f6] transition-colors cursor-pointer"
             >
-              Upload Different File
+              {t("uploadDifferentFile")}
             </button>
 
             <div className="flex items-center space-x-3">
               <span className="text-xs text-[#6b7280]">
-                <strong>{selectedCount}</strong> selected
+                {t("selectedCount", { count: selectedCount })}
               </span>
               <button
                 onClick={handleConfirmImport}
                 disabled={loading || selectedCount === 0}
-                className="px-5 py-2.5 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-extrabold rounded-xl shadow-md shadow-[#ff5b45]/20 flex items-center space-x-1.5 disabled:opacity-50 transition-all"
+                className="px-5 py-2.5 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-extrabold rounded-xl shadow-md shadow-[#ff5b45]/20 flex items-center space-x-1.5 disabled:opacity-50 transition-all cursor-pointer"
               >
                 {loading ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Importing...</span>
+                    <span>{t("importing")}</span>
                   </>
                 ) : (
                   <>
-                    <span>Confirm & Import ({selectedCount})</span>
+                    <span>{t("confirmImport", { count: selectedCount })}</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   ResponsiveContainer,
   ComposedChart,
@@ -12,6 +13,7 @@ import {
   ReferenceLine,
 } from "recharts";
 import { Transaction, IncomeForecast, IncomeAnalytics } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface IncomeChartProps {
   transactions: Transaction[];
@@ -24,6 +26,9 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
   forecast,
   analytics,
 }) => {
+  const t = useTranslations("incomeChart");
+  const locale = useLocale();
+
   // Aggregate historical income by week
   const incomeTxs = transactions
     .filter((t) => t.transaction_type === "INCOME")
@@ -37,7 +42,7 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
   recentHistory.forEach((tx, idx) => {
     const d = new Date(tx.date);
     chartData.push({
-      label: `W${idx + 1} (${d.toLocaleDateString("en-IN", { month: "short", day: "numeric" })})`,
+      label: `W${idx + 1} (${d.toLocaleDateString(locale === "bn" ? "bn-IN" : locale === "ta" ? "ta-IN" : locale === "hi" ? "hi-IN" : "en-IN", { month: "short", day: "numeric" })})`,
       actual: tx.amount,
       baseline: analytics?.stabilized_income || 0,
       type: "historical",
@@ -48,7 +53,7 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
   if (forecast && forecast.forecast_points) {
     forecast.forecast_points.forEach((pt, idx) => {
       chartData.push({
-        label: `+${idx + 1}w (Next)`,
+        label: `+${idx + 1}w`,
         projected: pt.predicted,
         confidenceLower: pt.lower,
         confidenceUpper: pt.upper,
@@ -66,21 +71,21 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
           <p className="font-bold text-[#111827]">{label}</p>
           {data.actual !== undefined && (
             <p className="text-[#ff5b45] font-semibold">
-              Made this week: <strong className="text-[#111827] font-mono">₹{data.actual.toLocaleString("en-IN")}</strong>
+              {t("madeThisWeek")} <strong className="text-[#111827] font-mono">{formatCurrency(data.actual, "INR", locale)}</strong>
             </p>
           )}
           {data.projected !== undefined && (
             <p className="text-[#0284c7] font-semibold">
-              Expected pay: <strong className="text-[#111827] font-mono">₹{data.projected.toLocaleString("en-IN")}</strong>
+              {t("expectedPay")} <strong className="text-[#111827] font-mono">{formatCurrency(data.projected, "INR", locale)}</strong>
             </p>
           )}
           {data.confidenceLower !== undefined && (
             <p className="text-[#6b7280] text-[11px] font-mono">
-              Expected range: ₹{data.confidenceLower.toLocaleString("en-IN")} - ₹{data.confidenceUpper.toLocaleString("en-IN")}
+              {t("expectedRange")} {formatCurrency(data.confidenceLower, "INR", locale)} - {formatCurrency(data.confidenceUpper, "INR", locale)}
             </p>
           )}
           <p className="text-[#d97706] text-[11px] font-mono">
-            Normal pay: ₹{data.baseline?.toLocaleString("en-IN")}
+            {t("normalPayTooltip")} {formatCurrency(data.baseline || 0, "INR", locale)}
           </p>
         </div>
       );
@@ -93,25 +98,25 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#eae8e3] gap-2">
         <div>
           <h3 className="text-sm font-bold tracking-wide text-[#111827] uppercase">
-            Income & Future Forecast
+            {t("title")}
           </h3>
           <p className="text-xs text-[#6b7280] mt-0.5">
-            What you made past weeks vs. your normal pay and expected next weeks
+            {t("subtitle")}
           </p>
         </div>
 
         <div className="flex items-center space-x-3 text-xs">
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded bg-[#ff5b45]"></span>
-            <span className="text-[#4b5563] text-[11px] font-medium">What You Made</span>
+            <span className="text-[#4b5563] text-[11px] font-medium">{t("whatYouMade")}</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded bg-[#0284c7]"></span>
-            <span className="text-[#4b5563] text-[11px] font-medium">Next Weeks</span>
+            <span className="text-[#4b5563] text-[11px] font-medium">{t("nextWeeks")}</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <span className="w-3 h-0.5 border-t-2 border-dashed border-[#f59e0b]"></span>
-            <span className="text-[#4b5563] text-[11px] font-medium">Normal Pay</span>
+            <span className="text-[#4b5563] text-[11px] font-medium">{t("normalPay")}</span>
           </div>
         </div>
       </div>
@@ -135,7 +140,7 @@ export const IncomeChart: React.FC<IncomeChartProps> = ({
                 stroke="#f59e0b"
                 strokeDasharray="4 4"
                 label={{
-                  value: `Normal ₹${analytics.stabilized_income.toLocaleString("en-IN")}`,
+                  value: `${t("normalPrefix")} ${formatCurrency(analytics.stabilized_income, "INR", locale)}`,
                   fill: "#d97706",
                   fontSize: 10,
                   position: "top",

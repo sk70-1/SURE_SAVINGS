@@ -81,7 +81,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
                 {isWithdraw ? t("withdrawTitle") : t("depositTitle")}
               </h3>
               <span className="text-[10px] text-[#ff5b45] font-bold uppercase tracking-wider">
-                Sure-Savings Practice Mode
+                {t("practiceMode")}
               </span>
             </div>
           </div>
@@ -96,14 +96,14 @@ export const BufferModal: React.FC<BufferModalProps> = ({
         {/* Current State Indicator */}
         <div className="my-4 bg-[#fbfbfa] p-3.5 rounded-2xl border border-[#eae8e3] grid grid-cols-2 gap-3 text-xs">
           <div>
-            <span className="text-[#6b7280] text-[11px] block font-medium">Total Saved</span>
+            <span className="text-[#6b7280] text-[11px] block font-medium">{t("totalSaved")}</span>
             <span className="text-sm font-bold text-[#111827] font-mono">
               {formatCurrency(buffer.current_balance, "INR", locale)}
             </span>
           </div>
           <div>
             <span className="text-[#6b7280] text-[11px] block font-medium">
-              {isWithdraw ? "Safe to Take Out" : "Left to Reach Goal"}
+              {isWithdraw ? t("safeToTakeOut") : t("leftToReachGoal")}
             </span>
             <span className={`text-sm font-bold font-mono ${isWithdraw ? "text-[#059669]" : "text-[#ff5b45]"}`}>
               {isWithdraw
@@ -117,7 +117,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
           <div className="mb-4 p-3 rounded-2xl bg-[#fffbeb] border border-[#fef3c7] text-[#92400e] text-xs flex items-center space-x-2">
             <ShieldAlert className="w-4 h-4 shrink-0 text-[#d97706]" />
             <span>
-              Emergency Floor: <strong>{formatCurrency(buffer.minimum_floor, "INR", locale)}</strong>. We keep this safe so you always have money for rent and food.
+              {t("floorExplanation", { amount: formatCurrency(buffer.minimum_floor, "INR", locale) })}
             </span>
           </div>
         )}
@@ -136,7 +136,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
                 required
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount (e.g. 900)"
+                placeholder={t("amountPlaceholder")}
                 className="w-full bg-[#fbfbfa] text-sm text-[#111827] font-bold pl-7 pr-4 py-2.5 rounded-xl border border-[#eae8e3] focus:outline-none focus:ring-2 focus:ring-[#ff5b45]/30 focus:border-[#ff5b45]"
               />
             </div>
@@ -144,7 +144,7 @@ export const BufferModal: React.FC<BufferModalProps> = ({
 
           {/* Quick preset chips */}
           <div className="flex items-center space-x-2">
-            <span className="text-[10px] font-bold text-[#6b7280]">Presets:</span>
+            <span className="text-[10px] font-bold text-[#6b7280]">{t("presets")}</span>
             {[500, 900, 2000, 5000].map((preset) => (
               <button
                 key={preset}

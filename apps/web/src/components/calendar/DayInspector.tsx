@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   CalendarDayDetail, CalendarDay, CalendarEvent
 } from "../../lib/types";
@@ -8,6 +9,7 @@ import {
   ShieldAlert, ShieldCheck, ArrowDownLeft, ArrowUpRight,
   Clock, AlertTriangle, ArrowRight, Sparkles, CheckCircle2
 } from "lucide-react";
+import { formatCurrency, formatDate as formatGlobalDate } from "../../lib/formatters";
 
 interface DayInspectorProps {
   dayDetail: CalendarDayDetail | null;
@@ -24,9 +26,11 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
   onOpenBufferModal,
   onOpenAllocationModal,
 }) => {
+  const t = useTranslations("calendar");
+  const locale = useLocale();
+
   const formatMoney = (val: number) => {
-    const symbol = currency === "INR" ? "₹" : "$";
-    return `${symbol}${Math.round(val || 0).toLocaleString(currency === "INR" ? "en-IN" : "en-US")}`;
+    return formatCurrency(val, currency, locale);
   };
 
   const activeDay = dayDetail?.day_data || selectedDay;
@@ -35,16 +39,15 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
     return (
       <div className="bg-white rounded-2xl border border-[#eae8e3] p-6 text-center text-[#6b7280]">
         <Clock className="w-8 h-8 text-[#9ca3af] mx-auto mb-2" />
-        <p className="text-sm font-semibold">Select a day on the calendar</p>
-        <p className="text-xs mt-1">Click any date to view detailed inflows, debits, and risk diagnosis.</p>
+        <p className="text-sm font-semibold">{t("selectDayPrompt")}</p>
+        <p className="text-xs mt-1">{t("selectDayDesc")}</p>
       </div>
     );
   }
 
   const formatDate = (dateStr: string) => {
     try {
-      const d = new Date(dateStr + "T00:00:00");
-      return d.toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", year: "numeric" });
+      return formatGlobalDate(dateStr, locale);
     } catch {
       return dateStr;
     }
@@ -66,15 +69,15 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
       <div>
         <div className="flex items-center justify-between mb-1">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#9ca3af]">
-            Inspecting Target Date
+            {t("inspectingTargetDate")}
           </span>
           {activeDay.is_risk_day ? (
             <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-[#ffe4e6] text-[#e11d48] border border-[#fecdd3]">
-              High Attention
+              {t("highAttention")}
             </span>
           ) : (
             <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-full bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
-              Normal Rhythm
+              {t("normalRhythm")}
             </span>
           )}
         </div>
@@ -86,8 +89,8 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
           activeDay.is_risk_day ? "text-[#e11d48]" : "text-[#6b7280]"
         }`}>
           {activeDay.is_risk_day
-            ? "Critical Liquidity Horizon · Intraday Timing Dip"
-            : "Cash position healthy · Cushion intact"}
+            ? t("criticalLiquidityHorizon")
+            : t("cashPositionHealthy")}
         </p>
       </div>
 
@@ -96,7 +99,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
         <div className="flex items-center justify-between text-xs font-extrabold text-[#059669]">
           <span className="flex items-center space-x-1">
             <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Expected Inflows</span>
+            <span>{t("expectedInflows")}</span>
           </span>
           <span className="text-sm font-black">+{formatMoney(activeDay.total_inflow)}</span>
         </div>
@@ -110,7 +113,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
                   <span className="truncate">{item.title}</span>
                   {item.is_forecast && (
                     <span className="text-[9px] px-1 py-0.2 rounded bg-[#dcfce7] text-[#15803d] font-bold">
-                      {item.confidence ? `${Math.round(item.confidence * 100)}% conf.` : "forecast"}
+                      {item.confidence ? `${Math.round(item.confidence * 100)}%` : "forecast"}
                     </span>
                   )}
                 </div>
@@ -122,7 +125,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
           </div>
         ) : (
           <div className="text-[11px] text-[#9ca3af] italic px-1">
-            No income scheduled for this date.
+            {t("noIncomeScheduled")}
           </div>
         )}
       </div>
@@ -132,7 +135,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
         <div className="flex items-center justify-between text-xs font-extrabold text-[#ea580c]">
           <span className="flex items-center space-x-1">
             <ArrowUpRight className="w-3.5 h-3.5" />
-            <span>Scheduled Debits</span>
+            <span>{t("scheduledDebits")}</span>
           </span>
           <span className="text-sm font-black">-{formatMoney(activeDay.total_outflow)}</span>
         </div>
@@ -158,7 +161,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
           </div>
         ) : (
           <div className="text-[11px] text-[#9ca3af] italic px-1">
-            No debits scheduled for this date.
+            {t("noDebitsScheduled")}
           </div>
         )}
       </div>
@@ -166,7 +169,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
       {/* Net Projected Flow */}
       <div className="p-3 rounded-xl bg-[#fafaf9] border border-[#eae8e3] flex items-center justify-between">
         <span className="text-xs font-bold text-[#4b5563]">
-          Net Projected Gap / Surplus:
+          {t("netProjectedGap")}
         </span>
         <span
           className={`text-base font-black tracking-tight ${
@@ -182,7 +185,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
       {dayDetail?.intraday_timeline && dayDetail.intraday_timeline.length > 0 && (
         <div className="space-y-2">
           <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-            Intraday Timing Sequence
+            {t("intradayTimingSequence")}
           </span>
           <div className="bg-[#fbfbfa] border border-[#eae8e3] rounded-xl p-3 space-y-2">
             {dayDetail.intraday_timeline.map((step, idx) => (
@@ -222,7 +225,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
             <span className={`text-xs font-extrabold ${
               activeDay.is_risk_day ? "text-[#9f1239]" : "text-[#334155]"
             }`}>
-              Deterministic Risk Diagnosis
+              {t("deterministicRiskDiagnosis")}
             </span>
           </div>
           <p className="text-xs leading-relaxed text-[#475569]">
@@ -234,7 +237,7 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
       {/* Vault Buffer Reserve & Safety Floor Bar */}
       <div className="space-y-2 pt-1 border-t border-[#eae8e3]">
         <div className="flex items-center justify-between text-xs">
-          <span className="font-bold text-[#4b5563]">Available Safe Buffer in Vault:</span>
+          <span className="font-bold text-[#4b5563]">{t("availableSafeBufferInVault")}</span>
           <span className="text-sm font-black text-[#0d9488]">{formatMoney(safeBuffer)}</span>
         </div>
 
@@ -253,8 +256,8 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
         </div>
 
         <div className="flex items-center justify-between text-[10px] text-[#6b7280]">
-          <span>Needed: <strong className={bufferNeeded > 0 ? "text-[#e11d48]" : "text-[#111827]"}>{formatMoney(bufferNeeded)}</strong></span>
-          <span>Floor Safeguard: <strong className="text-[#6b7280]">{formatMoney(floorSafeguard)}</strong></span>
+          <span>{t("needed")} <strong className={bufferNeeded > 0 ? "text-[#e11d48]" : "text-[#111827]"}>{formatMoney(bufferNeeded)}</strong></span>
+          <span>{t("floorSafeguard")} <strong className="text-[#6b7280]">{formatMoney(floorSafeguard)}</strong></span>
         </div>
       </div>
 
@@ -265,11 +268,11 @@ export const DayInspector: React.FC<DayInspectorProps> = ({
           className="w-full py-2.5 px-4 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-extrabold rounded-xl shadow-md shadow-[#ff5b45]/20 flex items-center justify-center space-x-1.5 transition-all"
         >
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Simulate Buffer Smoothing</span>
+          <span>{t("simulateBufferSmoothing")}</span>
           <ArrowRight className="w-3.5 h-3.5" />
         </button>
         <p className="text-[10px] text-center text-[#9ca3af] mt-1.5">
-          Pure simulation • No real funds moved • Safe reserve protection
+          {t("pureSimulationNotice")}
         </p>
       </div>
 

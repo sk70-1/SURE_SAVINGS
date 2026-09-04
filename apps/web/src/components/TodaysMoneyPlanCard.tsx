@@ -54,72 +54,75 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
   type CtaAction = "APPROVE_REC" | "DEPOSIT" | "WITHDRAW" | "REVIEW_PLAN";
 
   // Build the single primary plain-language action and status
-  let statusBadge = "Safe this week";
+  let statusBadge = t("safeThisWeek");
   let statusBadgeStyle = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
-  let headline = "You are safe this week";
-  let recommendedAction = `Save ${formatCurrency(1000, "INR", locale)}`;
+  let headline = t("safeHeadline");
+  let recommendedAction = t("saveAction", { amount: formatCurrency(1000, "INR", locale) });
   let amount = 1000;
-  let reason = "Your upcoming bills are covered, and you still have plenty left for daily expenses.";
-  let impact = `You will still have ${formatCurrency(safeToSpend, "INR", locale)} available for food, petrol, and daily spending.`;
-  let ctaLabel = `Save ${formatCurrency(1000, "INR", locale)} to Emergency Savings`;
+  let reason = t("reasonSafe");
+  let impact = t("impactSafe", { amount: formatCurrency(safeToSpend, "INR", locale) });
+  let ctaLabel = t("saveCta", { amount: formatCurrency(1000, "INR", locale) });
   let ctaType: CtaAction = "DEPOSIT";
   let whyDetails = [
-    "Your essential expenses and upcoming bills are already secured.",
-    "Stashing extra earnings now protects you during slow gig weeks.",
-    "This never moves real money from your bank account automatically.",
+    t("whySafePoint1"),
+    t("whySafePoint2"),
+    t("whySafePoint3"),
   ];
 
   if (pendingRec) {
     amount = Math.round(pendingRec.recommended_amount || 0);
     if (pendingRec.type === "SAVE_SURPLUS") {
-      statusBadge = "Good Week! Extra Income";
+      statusBadge = t("goodWeekBadge");
       statusBadgeStyle = "bg-[#ecfdf5] text-[#059669] border-[#a7f3d0]";
-      headline = "You have extra earnings this week";
-      recommendedAction = `Set aside ${formatCurrency(amount, "INR", locale)}`;
-      reason = pendingRec.why || "Your upcoming bills are secured, making this a safe time to build your emergency savings.";
-      impact = `After saving ${formatCurrency(amount, "INR", locale)}, you will still have ${formatCurrency(safeToSpend, "INR", locale)} for daily living.`;
-      ctaLabel = `Save ${formatCurrency(amount, "INR", locale)} to Emergency Savings`;
+      headline = t("extraEarningsHeadline");
+      recommendedAction = t("setAsideAction", { amount: formatCurrency(amount, "INR", locale) });
+      reason = pendingRec.why || t("reasonExtra");
+      impact = t("impactExtra", {
+        amount: formatCurrency(amount, "INR", locale),
+        safeAmount: formatCurrency(safeToSpend, "INR", locale),
+      });
+      ctaLabel = t("saveCta", { amount: formatCurrency(amount, "INR", locale) });
       ctaType = "APPROVE_REC";
       whyDetails = [
-        `Your recent income (${formatCurrency(analytics?.recent_actual_income || 0, "INR", locale)}) exceeded your weekly baseline.`,
-        "This recommendation leaves your essential bills and living costs fully funded.",
-        "Your emergency savings will stay protected for when gig demand slows down.",
+        t("whySurplusPoint1", { income: formatCurrency(analytics?.recent_actual_income || 0, "INR", locale) }),
+        t("whySurplusPoint2"),
+        t("whySurplusPoint3"),
       ];
     } else if (pendingRec.type === "USE_BUFFER") {
-      statusBadge = "Slow Week";
+      statusBadge = t("slowWeekBadge");
       statusBadgeStyle = "bg-[#fffbeb] text-[#d97706] border-[#fef3c7]";
-      headline = "Use your emergency savings to cover bills";
-      recommendedAction = `Draw ${formatCurrency(amount, "INR", locale)} from savings`;
-      reason = pendingRec.why || "Income is lower than usual this week. Your emergency savings are here exactly for this.";
-      impact = `This safely covers your essential bills without missing payments or taking high-cost loans.`;
-      ctaLabel = `Use ${formatCurrency(amount, "INR", locale)} from Savings`;
+      headline = t("useSavingsHeadline");
+      recommendedAction = t("drawAction", { amount: formatCurrency(amount, "INR", locale) });
+      reason = pendingRec.why || t("reasonSlow");
+      impact = t("impactSlow");
+      ctaLabel = t("useCta", { amount: formatCurrency(amount, "INR", locale) });
       ctaType = "APPROVE_REC";
       whyDetails = [
-        "Your emergency savings are meant to smooth out slow or unpaid weeks.",
-        `Drawing ${formatCurrency(amount, "INR", locale)} keeps you above your minimum safe floor.`,
-        "You can replenish your cushion once payouts pick back up.",
+        t("whySlowPoint1"),
+        t("whySlowPoint2", { amount: formatCurrency(amount, "INR", locale) }),
+        t("whySlowPoint3"),
       ];
     } else if (pendingRec.type === "PROTECT_BUFFER" || pendingRec.type === "HOLD_CASH") {
-      statusBadge = "Bills Ahead";
+      statusBadge = t("billsAheadBadge");
       statusBadgeStyle = "bg-[#fffbeb] text-[#d97706] border-[#fef3c7]";
-      headline = "Keep money ready for upcoming bills";
-      recommendedAction = "Keep cash in your account";
-      reason = pendingRec.why || "You have essential bills coming due soon. Keep this cash available rather than spending it.";
-      impact = "This avoids overdraft fees and keeps all your bills on time.";
-      ctaLabel = "Review Upcoming Bills";
+      headline = t("billsAheadHeadline");
+      recommendedAction = t("keepCashAction");
+      reason = pendingRec.why || t("reasonBillsAhead");
+      impact = t("impactBillsAhead");
+      ctaLabel = t("reviewBillsCta");
       ctaType = "REVIEW_PLAN";
       whyDetails = [
-        "Upcoming bills require funds in your regular bank account.",
-        "Keeping cash ready now prevents cash-flow pinches later this month.",
-        "We'll alert you when it's safe to start saving again.",
+        t("whyBillsPoint1"),
+        t("whyBillsPoint2"),
+        t("whyBillsPoint3"),
       ];
     }
   } else if (allocationPlan && allocationPlan.breakdown.protected_buffer > 0) {
     amount = Math.round(allocationPlan.breakdown.protected_buffer);
-    recommendedAction = `Save ${formatCurrency(amount, "INR", locale)}`;
-    reason = "Your planned weekly allocation recommends stashing this amount to keep your cushion on track.";
-    impact = `You will still have ${formatCurrency(safeToSpend, "INR", locale)} for daily spending.`;
-    ctaLabel = `Save ${formatCurrency(amount, "INR", locale)} to Emergency Savings`;
+    recommendedAction = t("saveAction", { amount: formatCurrency(amount, "INR", locale) });
+    reason = t("reasonAllocation");
+    impact = t("impactSafe", { amount: formatCurrency(safeToSpend, "INR", locale) });
+    ctaLabel = t("saveCta", { amount: formatCurrency(amount, "INR", locale) });
     ctaType = "DEPOSIT";
   }
 
@@ -211,7 +214,7 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
             onClick={handleNotNow}
             className="px-4 py-3 text-xs font-bold text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] rounded-2xl transition-all text-center cursor-pointer"
           >
-            Not now
+            {t("notNow")}
           </button>
         )}
 
@@ -221,7 +224,7 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
           className="ml-auto text-xs font-bold text-[#ff5b45] hover:text-[#e04835] flex items-center space-x-1 py-2 px-2 rounded-xl transition-all self-center cursor-pointer"
         >
           <HelpCircle className="w-3.5 h-3.5" />
-          <span>Why this recommendation?</span>
+          <span>{t("whyPrompt")}</span>
           {whyExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
         </button>
       </div>
@@ -229,7 +232,7 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
       {/* Expandable Explanation Details */}
       {whyExpanded && (
         <div className="mt-4 pt-4 border-t border-[#ffdad4]/60 space-y-2 text-xs text-[#4b5563] animate-fadeIn">
-          <h4 className="font-bold text-[#111827]">Why we recommend this:</h4>
+          <h4 className="font-bold text-[#111827]">{t("whyHeading")}</h4>
           <ul className="space-y-1.5 list-disc list-inside text-[#4b5563] pl-1">
             {whyDetails.map((point, idx) => (
               <li key={idx} className="leading-relaxed">
@@ -238,7 +241,7 @@ export const TodaysMoneyPlanCard: React.FC<TodaysMoneyPlanCardProps> = ({
             ))}
           </ul>
           <p className="text-[11px] text-[#9ca3af] pt-1 italic">
-            Note: Sure-Savings is your friendly guide and simulation. We never move real money out of your bank automatically.
+            {t("whyNote")}
           </p>
         </div>
       )}

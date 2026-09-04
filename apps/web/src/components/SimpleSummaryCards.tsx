@@ -63,7 +63,7 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
               </span>
             </div>
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
-              {coverageWeeks} Weeks Covered
+              {t("weeksCovered", { weeks: coverageWeeks })}
             </span>
           </div>
 
@@ -72,13 +72,13 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
               {formatCurrency(currentSaved, "INR", locale)}
             </span>
             <p className="text-xs text-[#6b7280] mt-1">
-              Backup cushion to protect you during slow or unpaid gig weeks.
+              {t("cushionDesc")}
             </p>
           </div>
 
           <div className="mt-3.5 pt-3 border-t border-[#f3f4f6] text-xs text-[#4b5563] space-y-1">
             <div className="flex justify-between">
-              <span className="text-[#6b7280]">Goal:</span>
+              <span className="text-[#6b7280]">{t("goal")}</span>
               <strong className="font-mono text-[#111827]">{formatCurrency(targetGoal, "INR", locale)}</strong>
             </div>
             <div className="flex justify-between">
@@ -106,7 +106,7 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
               onClick={onOpenWithdraw}
               className="py-2 px-3 text-xs font-semibold text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] rounded-xl transition-colors cursor-pointer"
             >
-              Withdraw
+              {t("withdraw")}
             </button>
           )}
         </div>
@@ -141,14 +141,14 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
           <div className="mt-3.5 pt-3 border-t border-[#f3f4f6] text-xs text-[#4b5563] space-y-1">
             <div className="flex items-center space-x-1.5 text-[#059669]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
-              <span className="font-medium">Zero stress daily spending allowance</span>
+              <span className="font-medium">{t("zeroStressDaily")}</span>
             </div>
           </div>
         </div>
 
         <div className="mt-4 pt-3">
           <p className="text-[11px] text-[#9ca3af]">
-            Updates automatically when you record income or bills.
+            {t("autoUpdateNote")}
           </p>
         </div>
       </div>
@@ -162,11 +162,11 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
                 <CalendarClock className="w-5 h-5" />
               </div>
               <span className="text-xs font-bold uppercase tracking-wider text-[#6b7280]">
-                Upcoming Bills
+                {t("upcomingBills")}
               </span>
             </div>
             <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#f5f3ff] text-[#7c3aed] border border-[#ddd6fe]">
-              This month
+              {t("thisMonth")}
             </span>
           </div>
 
@@ -175,7 +175,7 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
               {formatCurrency(upcomingBillsTotal, "INR", locale)}
             </span>
             <p className="text-xs text-[#6b7280] mt-1">
-              Total essential obligations, rent, and scheduled bills due this cycle.
+              {t("upcomingBillsDesc")}
             </p>
           </div>
 
@@ -183,18 +183,18 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
             {nearestBill ? (
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="text-[#6b7280] block text-[11px]">Nearest due:</span>
+                  <span className="text-[#6b7280] block text-[11px]">{t("nearestDue")}</span>
                   <strong className="text-[#111827] font-medium">{nearestBill.title} ({formatDate(nearestBill.due_date, locale)})</strong>
                 </div>
                 <div className="text-right">
                   <span className="font-mono font-bold text-[#111827]">{formatCurrency(nearestBill.amount, "INR", locale)}</span>
                   <span className={`block text-[10px] font-bold ${nearestBill.is_covered !== false ? "text-[#059669]" : "text-[#d97706]"}`}>
-                    {nearestBill.is_covered !== false ? "● Covered" : "● Needs attention"}
+                    {nearestBill.is_covered !== false ? t("covered") : t("needsAttention")}
                   </span>
                 </div>
               </div>
             ) : (
-              <span className="text-[#6b7280]">No immediate bills due this week</span>
+              <span className="text-[#6b7280]">{t("noImmediateBills")}</span>
             )}
           </div>
         </div>
@@ -204,7 +204,7 @@ export const SimpleSummaryCards: React.FC<SimpleSummaryCardsProps> = ({
             href="/calendar"
             className="w-full py-2 text-xs font-bold text-[#7c3aed] hover:text-[#6d28d9] flex items-center justify-center space-x-1.5 transition-colors group cursor-pointer"
           >
-            <span>See all upcoming bills</span>
+            <span>{t("seeAllUpcomingBills")}</span>
             <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
           </Link>
         </div>

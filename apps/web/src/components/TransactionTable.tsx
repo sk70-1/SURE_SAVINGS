@@ -88,7 +88,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
           </div>
           <h4 className="text-sm font-bold text-[#111827] mb-1">{t("empty")}</h4>
           <p className="text-xs text-[#6b7280] max-w-sm mb-4">
-            Add your income payouts or essential expenses to start generating your personalized Smart Income Buffer recommendations.
+            {t("emptyDesc")}
           </p>
           {onOpenAddTransaction && (
             <button
@@ -96,7 +96,7 @@ export const TransactionTable: React.FC<TransactionTableProps> = ({
               className="px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] rounded-xl shadow-md flex items-center space-x-1.5 cursor-pointer"
             >
               <PlusCircle className="w-4 h-4" />
-              <span>Record First Transaction</span>
+              <span>{t("recordFirst")}</span>
             </button>
           )}
         </div>

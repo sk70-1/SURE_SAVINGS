@@ -29,14 +29,14 @@ export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClos
         <div className="mb-6">
           <div className="flex items-center space-x-2">
             <span className="px-3 py-1 text-[11px] font-bold rounded-full bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] uppercase tracking-wider">
-              Simple Guide
+              {t("simpleGuide")}
             </span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-[#111827] mt-2 font-sans">
             {t("title")}
           </h2>
           <p className="text-xs sm:text-sm text-[#6b7280] mt-1">
-            Built for freelancers, rideshare drivers, and gig workers who don't get a fixed monthly paycheck.
+            {t("audienceSubtitle")}
           </p>
         </div>
 
@@ -99,13 +99,13 @@ export const HowItWorksModal: React.FC<HowItWorksModalProps> = ({ isOpen, onClos
         <div className="mt-6 pt-4 border-t border-[#eae8e3] flex items-center justify-between">
           <span className="text-[11px] text-[#6b7280] flex items-center space-x-1 font-mono">
             <Lock className="w-3.5 h-3.5 text-[#d97706]" />
-            <span>Bank-Grade Safe • Floor Protected</span>
+            <span>{t("securityBadge")}</span>
           </span>
           <button
             onClick={onClose}
             className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-md shadow-[#ff5b45]/30 transition-all active:scale-95 cursor-pointer"
           >
-            Got It
+            {t("gotIt")}
           </button>
         </div>
 

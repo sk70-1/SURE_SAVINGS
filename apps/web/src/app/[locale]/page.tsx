@@ -397,10 +397,10 @@ export default function DashboardPage() {
             </div>
             <div>
               <h2 className="text-xl sm:text-2xl font-black text-[#111827] tracking-tight">
-                Let’s build your money plan
+                {tDash("buildMoneyPlanTitle")}
               </h2>
               <p className="text-xs sm:text-sm text-[#6b7280] mt-2 max-w-md mx-auto leading-relaxed">
-                Add one income payment and one essential expense. We’ll create a safe plan for your next week.
+                {tDash("buildMoneyPlanSubtitle")}
               </p>
             </div>
 
@@ -433,7 +433,7 @@ export default function DashboardPage() {
                 onClick={handleToggleDemoMode}
                 className="text-xs font-semibold text-[#6b7280] hover:text-[#111827] underline cursor-pointer"
               >
-                Or load Arjun's demo sandbox with sample transactions
+                {tDash("loadArjunDemo")}
               </button>
             </div>
           </div>
@@ -497,8 +497,8 @@ export default function DashboardPage() {
                   <Sliders className="w-4 h-4 text-[#ff5b45]" />
                   <span>
                     {showDetailedSections
-                      ? "Hide detailed metrics, charts & history"
-                      : "See detailed analytics, money safety breakdown & history"}
+                      ? tDash("hideDetails")
+                      : tDash("showDetails")}
                   </span>
                 </div>
                 {showDetailedSections ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}

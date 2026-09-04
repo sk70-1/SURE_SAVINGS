@@ -1,9 +1,11 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { CalendarDay, CalendarMonthData } from "../../lib/types";
 import { CalendarDayCell } from "./CalendarDayCell";
-import { Sparkles, ShieldCheck } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { formatCurrency } from "../../lib/formatters";
 
 interface CashFlowCalendarProps {
   data: CalendarMonthData;
@@ -16,9 +18,11 @@ export const CashFlowCalendar: React.FC<CashFlowCalendarProps> = ({
   selectedDay,
   onSelectDay,
 }) => {
+  const t = useTranslations("calendar");
+  const locale = useLocale();
+
   const formatMoney = (val: number) => {
-    const symbol = data.currency === "INR" ? "₹" : "$";
-    return `${symbol}${Math.round(val || 0).toLocaleString(data.currency === "INR" ? "en-IN" : "en-US")}`;
+    return formatCurrency(val, data.currency, locale);
   };
 
   const days = data.days;
@@ -32,15 +36,23 @@ export const CashFlowCalendar: React.FC<CashFlowCalendarProps> = ({
     leadingEmptyDays = (dayOfWeek + 6) % 7;
   }
 
-  const weekHeaders = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
+  const weekHeaders = [
+    t("daysMon"),
+    t("daysTue"),
+    t("daysWed"),
+    t("daysThu"),
+    t("daysFri"),
+    t("daysSat"),
+    t("daysSun"),
+  ];
 
   return (
     <div className="bg-white rounded-2xl border border-[#eae8e3] shadow-sm overflow-hidden">
       {/* Weekday Column Headers */}
       <div className="grid grid-cols-7 border-b border-[#eae8e3] bg-[#fafaf9]">
-        {weekHeaders.map((header) => (
+        {weekHeaders.map((header, idx) => (
           <div
-            key={header}
+            key={`${header}-${idx}`}
             className="py-2.5 text-center text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]"
           >
             {header}
@@ -76,11 +88,11 @@ export const CashFlowCalendar: React.FC<CashFlowCalendarProps> = ({
         {/* Left: Projection Fidelity */}
         <div className="flex items-center space-x-2">
           <span className="text-[#6b7280] font-medium">
-            {data.month_name} Projection Fidelity:
+            {data.month_name} {t("projectionFidelity")}
           </span>
           <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
             <Sparkles className="w-3 h-3 text-[#059669]" />
-            <span>{data.summary.projection_fidelity_score}% Historical Precision</span>
+            <span>{data.summary.projection_fidelity_score}% {t("historicalPrecision")}</span>
           </span>
         </div>
 
@@ -88,36 +100,36 @@ export const CashFlowCalendar: React.FC<CashFlowCalendarProps> = ({
         <div className="hidden xl:flex items-center space-x-3 text-[10px] font-semibold text-[#6b7280]">
           <span className="flex items-center space-x-1">
             <span className="w-2 h-2 rounded-full bg-[#059669]" />
-            <span>Income</span>
+            <span>{t("legendIncome")}</span>
           </span>
           <span className="flex items-center space-x-1">
             <span className="w-2 h-2 rounded-full bg-[#0d9488]" />
-            <span>Forecast</span>
+            <span>{t("legendForecast")}</span>
           </span>
           <span className="flex items-center space-x-1">
             <span className="w-2 h-2 rounded-full bg-[#7c3aed]" />
-            <span>Mandate/Bill</span>
+            <span>{t("legendMandate")}</span>
           </span>
           <span className="flex items-center space-x-1">
             <span className="w-2 h-2 rounded-full bg-[#ea580c]" />
-            <span>Essential</span>
+            <span>{t("legendEssential")}</span>
           </span>
           <span className="flex items-center space-x-1">
             <span className="w-2 h-2 rounded-full bg-[#e11d48]" />
-            <span>Risk Point</span>
+            <span>{t("legendRisk")}</span>
           </span>
         </div>
 
         {/* Right: Settled / Pending / Exposure metrics */}
         <div className="flex items-center space-x-4 text-[11px] text-[#6b7280]">
           <div>
-            Settled: <strong className="text-[#111827]">{formatMoney(data.summary.settled_inflow)}</strong>
+            {t("settledLabel")} <strong className="text-[#111827]">{formatMoney(data.summary.settled_inflow)}</strong>
           </div>
           <div>
-            Pending: <strong className="text-[#0284c7]">{formatMoney(data.summary.pending_inflow)}</strong>
+            {t("pendingLabel")} <strong className="text-[#0284c7]">{formatMoney(data.summary.pending_inflow)}</strong>
           </div>
           <div>
-            Exposure: <strong className={data.summary.exposure_amount > 0 ? "text-[#e11d48]" : "text-[#111827]"}>
+            {t("exposureLabel")} <strong className={data.summary.exposure_amount > 0 ? "text-[#e11d48]" : "text-[#111827]"}>
               {formatMoney(data.summary.exposure_amount)}
             </strong>
           </div>

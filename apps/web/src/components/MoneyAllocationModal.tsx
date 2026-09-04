@@ -1,12 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   X, ShieldCheck, AlertTriangle, XCircle, Check,
   Sparkles, RefreshCw, Lock, ArrowRight, HelpCircle
 } from "lucide-react";
 import { AllocationPlan, AllocationSimulationResult } from "../lib/types";
 import { api } from "../lib/api";
+import { formatCurrency } from "../lib/formatters";
 
 interface MoneyAllocationModalProps {
   isOpen: boolean;
@@ -23,6 +25,10 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
   onApproved,
   showToast,
 }) => {
+  const t = useTranslations("modals.moneyAllocation");
+  const tCommon = useTranslations("common");
+  const locale = useLocale();
+
   const [breakdown, setBreakdown] = useState<Record<string, number>>({
     essentials: 0,
     protected_buffer: 0,
@@ -101,7 +107,7 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
 
   const handleApprove = async () => {
     if (simResult && !simResult.is_safe) {
-      showToast("Cannot approve unsafe allocation. Please fix safety warnings.");
+      showToast(t("cannotApproveUnsafe"));
       return;
     }
 
@@ -110,7 +116,7 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
       await api.approveAllocation(plan.id, {
         custom_breakdown: breakdown,
       });
-      showToast("✅ Autopilot Allocation successfully approved & simulated!");
+      showToast(`✅ ${t("approvedSuccess")}`);
       await onApproved();
       onClose();
     } catch (err: any) {
@@ -132,14 +138,14 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
                 <Sparkles className="w-4 h-4" />
               </div>
               <h3 className="text-lg font-black text-[#111827]">
-                Money Allocation Autopilot
+                {t("title")}
               </h3>
               <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-[#fff5f3] text-[#ff5b45] border border-[#ffdad4] uppercase tracking-wider">
-                What-If Simulator
+                {t("simulatorBadge")}
               </span>
             </div>
             <p className="text-xs text-[#6b7280] mt-1">
-              Customize how ₹{Math.round(income).toLocaleString("en-IN")} is split. Changes are simulated in real-time.
+              {t("subtitle", { amount: formatCurrency(Math.round(income), "INR", locale) })}
             </p>
           </div>
 
@@ -176,13 +182,13 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
                 <div className="flex items-center justify-between font-bold">
                   <span>
                     {!simResult.is_safe
-                      ? "Unsafe Allocation Configuration"
+                      ? t("unsafeConfig")
                       : simResult.risk_level === "CAUTION"
-                      ? "Caution: Sub-optimal Financial Strategy"
-                      : "Verified Safe Allocation"}
+                      ? t("cautionConfig")
+                      : t("verifiedSafe")}
                   </span>
                   <span className="font-mono text-[11px] uppercase">
-                    Status: {simResult.risk_level}
+                    {t("statusLabel", { status: simResult.risk_level })}
                   </span>
                 </div>
                 {simResult.warnings.length > 0 ? (
@@ -193,7 +199,7 @@ export const MoneyAllocationModal: React.FC<MoneyAllocationModalProps> = ({
                   </ul>
                 ) : (
                   <p className="text-[11px] mt-0.5">
-                    Maintains emergency buffer floor, covers essential living costs, and enhances resilience score.
+                    {t("safeExplanation")}
                   </p>
                 )}
               </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import { CalendarDay, CalendarMonthData } from "../../lib/types";
 import { AlertTriangle, CheckCircle2, ArrowRight, ShieldCheck, Clock, PlusCircle } from "lucide-react";
+import { formatCurrency, formatDate as formatGlobalDate } from "../../lib/formatters";
 
 interface CashPressureViewProps {
   data: CalendarMonthData;
@@ -19,18 +21,15 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
   onSelectDay,
   onOpenAddObligation,
 }) => {
+  const tCal = useTranslations("calendar");
+  const locale = useLocale();
+
   const formatMoney = (val: number) => {
-    const symbol = data.currency === "INR" ? "₹" : "$";
-    return `${symbol}${Math.round(val || 0).toLocaleString(data.currency === "INR" ? "en-IN" : "en-US")}`;
+    return formatCurrency(val, data.currency, locale);
   };
 
   const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr + "T00:00:00");
-      return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
-    } catch {
-      return dateStr;
-    }
+    return formatGlobalDate(dateStr, locale);
   };
 
   if (mode === "pressure") {
@@ -44,19 +43,18 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
           </div>
           <div>
             <h3 className="text-lg font-black text-[#111827]">
-              Zero Cash Pressure Days in {data.month_name}
+              {tCal("zeroPressureTitle", { month: data.month_name })}
             </h3>
             <p className="text-xs text-[#6b7280] max-w-md mx-auto mt-1">
-              Deterministic calculations confirm your projected cash balance maintains a safe cushion
-              above the mandatory reserve floor across all days of this month.
+              {tCal("zeroPressureDesc")}
             </p>
           </div>
           <button
             onClick={onOpenAddObligation}
-            className="px-4 py-2 bg-[#fbfbfa] hover:bg-[#f3f4f6] text-[#4b5563] text-xs font-bold rounded-xl border border-[#eae8e3] transition-all inline-flex items-center space-x-1.5 shadow-sm"
+            className="px-4 py-2 bg-[#fbfbfa] hover:bg-[#f3f4f6] text-[#4b5563] text-xs font-bold rounded-xl border border-[#eae8e3] transition-all inline-flex items-center space-x-1.5 shadow-sm cursor-pointer"
           >
             <PlusCircle className="w-3.5 h-3.5 text-[#ff5b45]" />
-            <span>Add Scheduled Bill</span>
+            <span>{tCal("addObligation")}</span>
           </button>
         </div>
       );
@@ -72,15 +70,15 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
             </div>
             <div>
               <h4 className="text-sm font-extrabold text-[#9f1239]">
-                {pressureDays.length} Cash Pressure Horizon{pressureDays.length > 1 ? "s" : ""} Identified
+                {tCal("pressureHorizons", { count: pressureDays.length })}
               </h4>
               <p className="text-xs text-[#be123c] mt-0.5">
-                Total simulated liquidity exposure: <strong>{formatMoney(data.summary.exposure_amount)}</strong>
+                {tCal("exposureTotal", { amount: formatMoney(data.summary.exposure_amount) })}
               </p>
             </div>
           </div>
           <span className="hidden sm:inline text-xs font-bold text-[#e11d48] bg-white px-2.5 py-1 rounded-lg border border-[#fecdd3]">
-            Action Recommended
+            {tCal("actionRecommended")}
           </span>
         </div>
 
@@ -121,7 +119,7 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
 
                   <div className="flex items-center space-x-4 shrink-0 sm:text-right">
                     <div>
-                      <div className="text-[10px] font-bold text-[#9ca3af] uppercase">Closing Balance</div>
+                      <div className="text-[10px] font-bold text-[#9ca3af] uppercase">{tCal("closingBalance")}</div>
                       <div className={`text-sm font-black ${
                         day.projected_balance < 0 ? "text-[#e11d48]" : "text-[#d97706]"
                       }`}>
@@ -147,10 +145,10 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
     <div className="bg-white rounded-2xl border border-[#eae8e3] shadow-sm overflow-hidden">
       <div className="p-4 bg-[#fafaf9] border-b border-[#eae8e3] flex items-center justify-between">
         <h4 className="text-xs font-extrabold uppercase tracking-wider text-[#6b7280]">
-          Chronological Cash Timeline ({data.month_name})
+          {tCal("timelineTitle", { month: data.month_name })}
         </h4>
         <span className="text-xs text-[#6b7280]">
-          Showing <strong>{data.days.length}</strong> days
+          {tCal("showingDays", { count: data.days.length })}
         </span>
       </div>
 
@@ -198,7 +196,7 @@ export const CashPressureView: React.FC<CashPressureViewProps> = ({
                     </span>
                   ))
                 ) : (
-                  <span className="text-[11px] text-[#d1d5db] italic">No activity</span>
+                  <span className="text-[11px] text-[#d1d5db] italic">{tCal("noActivity")}</span>
                 )}
                 {day.events.length > 2 && (
                   <span className="text-[10px] text-[#9ca3af] font-bold">

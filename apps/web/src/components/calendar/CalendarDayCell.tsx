@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { CalendarDay, CalendarEvent } from "../../lib/types";
 import { Sparkles, AlertCircle } from "lucide-react";
 
@@ -17,6 +18,8 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
   currency = "INR",
   onSelectDay,
 }) => {
+  const tCal = useTranslations("calendar");
+
   const formatMoney = (val: number) => {
     const symbol = currency === "INR" ? "₹" : "$";
     return `${symbol}${Math.round(val || 0).toLocaleString(currency === "INR" ? "en-IN" : "en-US")}`;
@@ -78,7 +81,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
           </span>
           {day.is_today && (
             <span className="text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-[#fff1ef] text-[#ff5b45] border border-[#ffdad4]">
-              Today
+              {tCal("today")}
             </span>
           )}
         </div>
@@ -90,7 +93,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
             title={day.risk_reasons.join(" ")}
           >
             <AlertCircle className="w-2.5 h-2.5" />
-            <span>Risk</span>
+            <span>{tCal("risk")}</span>
           </span>
         )}
       </div>
@@ -117,7 +120,7 @@ export const CalendarDayCell: React.FC<CalendarDayCellProps> = ({
 
         {hiddenCount > 0 && (
           <div className="text-[9px] font-bold text-[#6b7280] text-right pr-1">
-            +{hiddenCount} more
+            {tCal("moreEvents", { count: hiddenCount })}
           </div>
         )}
       </div>

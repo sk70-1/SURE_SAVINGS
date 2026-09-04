@@ -20,6 +20,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
   isProMode = false,
 }) => {
   const t = useTranslations("bufferCard");
+  const tSummary = useTranslations("summaryCards");
   const locale = useLocale();
 
   if (!buffer) {
@@ -29,7 +30,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           <div className="flex items-center space-x-2 mb-2">
             <h3 className="text-sm font-bold text-[#111827]">{t("title")}</h3>
             <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-[#f3f4f6] text-[#6b7280]">
-              Starting Out
+              {t("startingOut")}
             </span>
           </div>
           <p className="text-xs text-[#6b7280]">
@@ -38,7 +39,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
           <div className="my-6 text-center py-4 bg-[#fbfbfa] rounded-2xl border border-[#eae8e3]">
             <span className="text-3xl font-black text-[#9ca3af] font-mono">₹0</span>
             <p className="text-xs text-[#6b7280] mt-1">
-              Add your first deposit or payout to build your savings.
+              {t("startingOutDesc")}
             </p>
           </div>
         </div>
@@ -72,7 +73,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
                 {t("title")}
               </h3>
               <span className="px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#fffbeb] text-[#d97706] border border-[#fef3c7]">
-                {coverageWeeks} Weeks Covered
+                {tSummary("weeksCovered", { weeks: coverageWeeks })}
               </span>
             </div>
             <p className="text-xs text-[#6b7280] mt-1">{t("subtitle")}</p>
@@ -90,7 +91,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
         <div className="mt-4">
           <div className="flex justify-between text-xs text-[#6b7280] mb-1.5">
             <span>
-              Goal: <strong className="text-[#111827]">{formatCurrency(targetAmount, "INR", locale)}</strong>
+              {tSummary("goal")} <strong className="text-[#111827]">{formatCurrency(targetAmount, "INR", locale)}</strong>
             </span>
             <span className="font-bold text-[#f59e0b]">{t("fundingProgress", { percent: targetPct })}</span>
           </div>
@@ -119,7 +120,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
               <div className="text-xs font-bold text-[#92400e] font-mono">
                 {formatCurrency(minimumFloor, "INR", locale)}
               </div>
-              <span className="text-[10px] text-[#b45309]/80 block mt-0.5">Untouchable for rent & food</span>
+              <span className="text-[10px] text-[#b45309]/80 block mt-0.5">{t("untouchableDesc")}</span>
             </div>
 
             <div className="bg-[#ecfdf5] p-2.5 rounded-xl border border-[#a7f3d0]">
@@ -130,7 +131,7 @@ export const BufferCard: React.FC<BufferCardProps> = ({
               <div className="text-xs font-bold text-[#065f46] font-mono">
                 {formatCurrency(safeBuffer, "INR", locale)}
               </div>
-              <span className="text-[10px] text-[#047857]/80 block mt-0.5">Available for emergencies</span>
+              <span className="text-[10px] text-[#047857]/80 block mt-0.5">{t("availableDesc")}</span>
             </div>
           </div>
         </div>

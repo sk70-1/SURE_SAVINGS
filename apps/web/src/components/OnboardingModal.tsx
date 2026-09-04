@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   Sparkles,
   ArrowRight,
   ArrowLeft,
-  Calendar,
-  Wallet,
   ShieldCheck,
   CheckCircle2,
   Lock,
 } from "lucide-react";
 import { api } from "../lib/api";
 import { OnboardingPayload } from "../lib/types";
+import { formatCurrency } from "../lib/formatters";
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -27,6 +27,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   onComplete,
   currencySymbol = "₹",
 }) => {
+  const t = useTranslations("onboarding");
+  const locale = useLocale();
+
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [payFrequency, setPayFrequency] = useState("weekly");
   const [essentialExpenses, setEssentialExpenses] = useState<number>(5000);
@@ -77,9 +80,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </div>
             <div>
               <h3 className="text-base font-black text-[#111827] tracking-tight">
-                Set Up Your Money Plan
+                {t("modalTitle")}
               </h3>
-              <p className="text-xs text-[#6b7280]">Step {step} of 3</p>
+              <p className="text-xs text-[#6b7280]">{t("stepCount", { step })}</p>
             </div>
           </div>
 
@@ -102,19 +105,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div className="space-y-4 animate-fadeIn">
             <div>
               <h4 className="text-lg font-black text-[#111827] mb-1">
-                How often do you get paid?
+                {t("step1Question")}
               </h4>
               <p className="text-xs text-[#6b7280]">
-                We use this to pace your savings without making cash feel tight.
+                {t("step1Subtitle")}
               </p>
             </div>
 
             <div className="grid grid-cols-1 gap-2.5 pt-2">
               {[
-                { id: "weekly", title: "Weekly payouts", desc: "Zomato, Swiggy, Blinkit, Zepto, Uber" },
-                { id: "daily", title: "Daily or per gig", desc: "Paid right after each completed trip or task" },
-                { id: "irregular", title: "Irregular / Client milestones", desc: "Freelance projects, design, coding, writing" },
-                { id: "monthly", title: "Monthly invoices", desc: "Fixed monthly retainer or client contract" },
+                { id: "weekly", title: t("freqWeeklyTitle"), desc: t("freqWeeklyDesc") },
+                { id: "daily", title: t("freqDailyTitle"), desc: t("freqDailyDesc") },
+                { id: "irregular", title: t("freqIrregularTitle"), desc: t("freqIrregularDesc") },
+                { id: "monthly", title: t("freqMonthlyTitle"), desc: t("freqMonthlyDesc") },
               ].map((opt) => (
                 <button
                   key={opt.id}
@@ -143,7 +146,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 onClick={() => setStep(2)}
                 className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold shadow-md shadow-[#ff5b45]/25 flex items-center justify-center space-x-2 transition-all cursor-pointer"
               >
-                <span>Continue</span>
+                <span>{t("continueButton")}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -155,10 +158,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div className="space-y-4 animate-fadeIn">
             <div>
               <h4 className="text-lg font-black text-[#111827] mb-1">
-                About how much do you need each week for essentials?
+                {t("step2Question")}
               </h4>
               <p className="text-xs text-[#6b7280]">
-                A rough estimate is fine. Include groceries, rent share, petrol, and utility bills.
+                {t("step2Subtitle")}
               </p>
             </div>
 
@@ -191,7 +194,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                         : "bg-[#fbfbfa] text-[#4b5563] border-[#eae8e3] hover:bg-[#f3f4f6]"
                     }`}
                   >
-                    {currencySymbol}{val.toLocaleString("en-IN")}/wk
+                    {formatCurrency(val, "INR", locale)}{t("perWeek")}
                   </button>
                 ))}
               </div>
@@ -204,7 +207,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 className="py-3.5 px-4 rounded-2xl border border-[#eae8e3] text-xs font-bold text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center space-x-1 transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
+                <span>{t("backButton")}</span>
               </button>
               <button
                 type="button"
@@ -212,7 +215,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 disabled={essentialExpenses <= 0}
                 className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold shadow-md shadow-[#ff5b45]/25 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 cursor-pointer"
               >
-                <span>Calculate My Recommended Goal</span>
+                <span>{t("calculateGoal")}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -224,10 +227,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div className="space-y-4 animate-fadeIn">
             <div>
               <h4 className="text-lg font-black text-[#111827] mb-1">
-                Your Recommended Savings Plan
+                {t("step3Title")}
               </h4>
               <p className="text-xs text-[#6b7280]">
-                We calculated this automatically based on your {currencySymbol}{essentialExpenses.toLocaleString("en-IN")}/week living costs.
+                {t("step3Subtitle", { amount: formatCurrency(essentialExpenses, "INR", locale) })}
               </p>
             </div>
 
@@ -238,18 +241,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <ShieldCheck className="w-5 h-5 text-[#ff5b45]" />
                     <span className="text-xs font-bold text-[#111827]">
-                      Recommended Savings Goal
+                      {t("recommendedGoalTitle")}
                     </span>
                   </div>
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-white text-[#ff5b45] border border-[#ffdad4]">
-                    4 Weeks Cushion
+                    {t("fourWeeksCushion")}
                   </span>
                 </div>
                 <div className="text-2xl font-black text-[#ff5b45] font-mono mt-1">
-                  {currencySymbol}{recommendedTarget.toLocaleString("en-IN")}
+                  {formatCurrency(recommendedTarget, "INR", locale)}
                 </div>
                 <p className="text-[11px] text-[#6b7280] mt-1">
-                  Protects you for an entire month if freelance gigs or platform orders dry up.
+                  {t("cushionBenefit")}
                 </p>
               </div>
 
@@ -259,24 +262,24 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   <div className="flex items-center space-x-2">
                     <Lock className="w-4 h-4 text-[#f59e0b]" />
                     <span className="text-xs font-bold text-[#111827]">
-                      Minimum Safe Savings
+                      {t("minSafeFloor")}
                     </span>
                   </div>
-                  <span className="text-[10px] text-[#6b7280]">1 week minimum</span>
+                  <span className="text-[10px] text-[#6b7280]">{t("oneWeekMin")}</span>
                 </div>
                 <div className="text-lg font-black text-[#111827] font-mono mt-1">
-                  {currencySymbol}{recommendedFloor.toLocaleString("en-IN")}
+                  {formatCurrency(recommendedFloor, "INR", locale)}
                 </div>
                 <p className="text-[11px] text-[#6b7280] mt-1">
-                  Your untouchable emergency floor for food and shelter.
+                  {t("floorBenefit")}
                 </p>
               </div>
 
               {/* Friendly Safety Disclaimer */}
               <div className="p-3 bg-[#ecfdf5] rounded-2xl border border-[#a7f3d0] text-xs text-[#065f46] space-y-1">
-                <p className="font-bold">🛡️ Non-Custodial Simulation</p>
+                <p className="font-bold">{t("disclaimerTitle")}</p>
                 <p className="text-[11px] text-[#047857]">
-                  Sure-Savings is your friendly money guide. We never move real money out of your bank account automatically. You can tweak your goals anytime under settings.
+                  {t("disclaimerText")}
                 </p>
               </div>
             </div>
@@ -288,7 +291,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 className="py-3.5 px-4 rounded-2xl border border-[#eae8e3] text-xs font-bold text-[#6b7280] hover:text-[#111827] hover:bg-[#f3f4f6] flex items-center space-x-1 transition-all cursor-pointer"
               >
                 <ArrowLeft className="w-4 h-4" />
-                <span>Back</span>
+                <span>{t("backButton")}</span>
               </button>
               <button
                 type="button"
@@ -296,7 +299,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 disabled={loading}
                 className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold shadow-md shadow-[#ff5b45]/25 flex items-center justify-center space-x-2 transition-all disabled:opacity-50 cursor-pointer"
               >
-                <span>{loading ? "Saving Plan..." : "Looks Great, Finish Setup"}</span>
+                <span>{loading ? t("savingPlan") : t("finishButton")}</span>
                 <CheckCircle2 className="w-4 h-4" />
               </button>
             </div>

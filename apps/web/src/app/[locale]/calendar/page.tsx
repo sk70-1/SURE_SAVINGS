@@ -236,7 +236,7 @@ export default function CalendarPage() {
             <div className="flex items-center space-x-2 text-[#9a3412]">
               <Lock className="w-4 h-4 text-[#ff5b45] shrink-0" />
               <span>
-                You are currently previewing in read-only mode. <strong>{tNav("signIn")}</strong> or activate a demo persona to save bills and see your personalized safety status.
+                {tCal("readOnlyBanner")}
               </span>
             </div>
             <div className="flex items-center space-x-2 shrink-0">
@@ -301,7 +301,7 @@ export default function CalendarPage() {
               onClick={handleGoToday}
               className="px-3 py-1.5 text-xs font-bold text-[#4b5563] hover:text-[#111827] bg-white hover:bg-[#f3f4f6] border border-[#eae8e3] rounded-2xl shadow-xs transition-all cursor-pointer"
             >
-              Today
+              {tCal("today")}
             </button>
 
             {/* Primary Action Button: Add Bill */}

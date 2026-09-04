@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { X, Calendar, DollarSign, Tag, Check, Trash2, ShieldCheck, AlertCircle } from "lucide-react";
 import { ScheduledObligation, CreateObligationPayload, UpdateObligationPayload } from "../../lib/types";
 
@@ -23,6 +24,9 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
   initialObligation,
   currency = "INR",
 }) => {
+  const t = useTranslations("modals.obligation");
+  const tCommon = useTranslations("common");
+
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("bills");
@@ -60,6 +64,8 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
   }, [initialObligation, isOpen]);
 
   if (!isOpen) return null;
+
+  const currencySymbol = currency === "INR" ? "₹" : "$";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,15 +135,15 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
         <div className="flex items-center justify-between pb-3 border-b border-[#eae8e3]">
           <div>
             <h3 className="text-base font-black text-[#111827]">
-              {initialObligation ? "Edit Scheduled Bill" : "Add Scheduled Bill"}
+              {initialObligation ? t("editTitle") : t("addTitle")}
             </h3>
             <p className="text-xs text-[#6b7280] mt-0.5">
-              Keep track of recurring EMIs, rent, subscriptions, and mandates.
+              {t("subtitle")}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-xl text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors"
+            className="p-1.5 rounded-xl text-[#9ca3af] hover:text-[#111827] hover:bg-[#f3f4f6] transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -155,26 +161,26 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
           <div className="p-4 rounded-2xl bg-[#fff5f5] border border-[#fecdd3] space-y-3 text-center">
             <AlertCircle className="w-8 h-8 text-[#e11d48] mx-auto" />
             <h4 className="text-sm font-extrabold text-[#9f1239]">
-              Confirm Deletion
+              {t("confirmDelete")}
             </h4>
             <p className="text-xs text-[#6b7280]">
-              Are you sure you want to delete &quot;<strong>{title}</strong>&quot;? This will remove all future occurrences from your cash-flow calendar.
+              {t("confirmDeleteDesc", { title })}
             </p>
             <div className="flex items-center space-x-2 pt-2">
               <button
                 type="button"
                 onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 py-2 text-xs font-bold text-[#4b5563] bg-white border border-[#eae8e3] rounded-xl hover:bg-[#f3f4f6]"
+                className="flex-1 py-2 text-xs font-bold text-[#4b5563] bg-white border border-[#eae8e3] rounded-xl hover:bg-[#f3f4f6] cursor-pointer"
               >
-                Cancel
+                {tCommon("cancel")}
               </button>
               <button
                 type="button"
                 onClick={handleDelete}
                 disabled={loading}
-                className="flex-1 py-2 text-xs font-bold text-white bg-[#e11d48] hover:bg-[#be123c] rounded-xl shadow-xs"
+                className="flex-1 py-2 text-xs font-bold text-white bg-[#e11d48] hover:bg-[#be123c] rounded-xl shadow-xs cursor-pointer"
               >
-                {loading ? "Deleting..." : "Yes, Delete"}
+                {loading ? t("deleting") : t("deleteButton")}
               </button>
             </div>
           </div>
@@ -183,14 +189,14 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
             {/* Title */}
             <div>
               <label className="block text-xs font-bold text-[#374151] mb-1">
-                Bill / Mandate Title *
+                {t("titleLabel")}
               </label>
               <input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g. Bike EV EMI Mandate, Rent, Cloud VPS"
+                placeholder={t("titlePlaceholder")}
                 className="w-full px-3.5 py-2 text-xs rounded-xl border border-[#eae8e3] focus:border-[#ff5b45] focus:ring-1 focus:ring-[#ff5b45] outline-none transition-all"
               />
             </div>
@@ -199,7 +205,7 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-[#374151] mb-1">
-                  Amount ({currency === "INR" ? "₹" : "$"}) *
+                  {t("amountLabel", { currency: currencySymbol })}
                 </label>
                 <input
                   type="number"
@@ -215,20 +221,20 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
 
               <div>
                 <label className="block text-xs font-bold text-[#374151] mb-1">
-                  Category
+                  {t("categoryLabel")}
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#eae8e3] focus:border-[#ff5b45] focus:ring-1 focus:ring-[#ff5b45] outline-none bg-white transition-all"
                 >
-                  <option value="loan">Loan / EMI</option>
-                  <option value="rent">Housing / Rent</option>
-                  <option value="utilities">Utilities & Wifi</option>
-                  <option value="transport">Transport / Fuel</option>
-                  <option value="insurance">Insurance</option>
-                  <option value="subscription">Software / Tool</option>
-                  <option value="bills">General Bill</option>
+                  <option value="loan">{t("catLoan")}</option>
+                  <option value="rent">{t("catRent")}</option>
+                  <option value="utilities">{t("catUtilities")}</option>
+                  <option value="transport">{t("catTransport")}</option>
+                  <option value="insurance">{t("catInsurance")}</option>
+                  <option value="subscription">{t("catSubscription")}</option>
+                  <option value="bills">{t("catBills")}</option>
                 </select>
               </div>
             </div>
@@ -237,25 +243,25 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold text-[#374151] mb-1">
-                  Frequency
+                  {t("frequencyLabel")}
                 </label>
                 <select
                   value={frequency}
                   onChange={(e) => setFrequency(e.target.value as any)}
                   className="w-full px-3 py-2 text-xs rounded-xl border border-[#eae8e3] focus:border-[#ff5b45] focus:ring-1 focus:ring-[#ff5b45] outline-none bg-white transition-all"
                 >
-                  <option value="monthly">Monthly</option>
-                  <option value="weekly">Weekly</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="yearly">Yearly</option>
-                  <option value="once">Once (One-off)</option>
+                  <option value="monthly">{t("freqMonthly")}</option>
+                  <option value="weekly">{t("freqWeekly")}</option>
+                  <option value="quarterly">{t("freqQuarterly")}</option>
+                  <option value="yearly">{t("freqYearly")}</option>
+                  <option value="once">{t("freqOnce")}</option>
                 </select>
               </div>
 
               {frequency === "monthly" ? (
                 <div>
                   <label className="block text-xs font-bold text-[#374151] mb-1">
-                    Day of Month (1-31)
+                    {t("dayOfMonthLabel")}
                   </label>
                   <input
                     type="number"
@@ -269,7 +275,7 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
               ) : (
                 <div>
                   <label className="block text-xs font-bold text-[#374151] mb-1">
-                    Next Due Date
+                    {t("nextDueDateLabel")}
                   </label>
                   <input
                     type="date"
@@ -284,9 +290,9 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
             {/* Essential Mandate Toggle */}
             <div className="flex items-center justify-between p-3 rounded-xl bg-[#fafaf9] border border-[#eae8e3]">
               <div>
-                <span className="text-xs font-bold text-[#111827] block">Essential Mandate</span>
+                <span className="text-xs font-bold text-[#111827] block">{t("essentialLabel")}</span>
                 <span className="text-[10px] text-[#6b7280]">
-                  Required for livelihood (EMI, rent, medicine, essential bills)
+                  {t("essentialDesc")}
                 </span>
               </div>
               <input
@@ -303,7 +309,7 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="p-2 text-[#9ca3af] hover:text-[#e11d48] hover:bg-[#ffe4e6] rounded-xl transition-colors"
+                  className="p-2 text-[#9ca3af] hover:text-[#e11d48] hover:bg-[#ffe4e6] rounded-xl transition-colors cursor-pointer"
                   title="Delete Obligation"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -314,17 +320,17 @@ export const ObligationModal: React.FC<ObligationModalProps> = ({
                 <button
                   type="button"
                   onClick={onClose}
-                  className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] transition-all"
+                  className="px-4 py-2 text-xs font-semibold text-[#6b7280] hover:text-[#111827] bg-[#fbfbfa] hover:bg-[#f3f4f6] rounded-xl border border-[#eae8e3] transition-all cursor-pointer"
                 >
-                  Cancel
+                  {tCommon("cancel")}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-md shadow-[#ff5b45]/20 transition-all flex items-center space-x-1.5"
+                  className="px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 rounded-xl shadow-md shadow-[#ff5b45]/20 transition-all flex items-center space-x-1.5 cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" />
-                  <span>{loading ? "Saving..." : initialObligation ? "Update Bill" : "Add Bill"}</span>
+                  <span>{loading ? t("saving") : initialObligation ? t("updateButton") : t("saveButton")}</span>
                 </button>
               </div>
             </div>

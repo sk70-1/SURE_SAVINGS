@@ -51,6 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onToggleDemoMode,
 }) => {
   const t = useTranslations("navigation");
+  const tDash = useTranslations("dashboard");
   const pathname = usePathname();
   const isDashboard = pathname === "/";
   const isCalendar = pathname === "/calendar";
@@ -231,7 +232,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 >
                   <div className="flex items-center space-x-2.5">
                     <Sliders className="w-4 h-4 text-[#6b7280]" />
-                    <span>{isProMode ? "Pro Mode" : "Simple Mode"}</span>
+                    <span>{isProMode ? tDash("proMode") : tDash("simpleMode")}</span>
                   </div>
                   {isProMode ? (
                     <ToggleRight className="w-5 h-5 text-[#ff5b45]" />
@@ -269,7 +270,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   >
                     <div className="flex items-center space-x-2.5">
                       <span className={`w-2.5 h-2.5 rounded-full ${isDemoMode ? "bg-amber-500" : "bg-gray-300"}`} />
-                      <span>Demo Sandbox</span>
+                      <span>{tDash("demoSandbox")}</span>
                     </div>
                     <span className="text-[10px] text-[#6b7280] font-bold">
                       {isDemoMode ? "ON" : "OFF"}

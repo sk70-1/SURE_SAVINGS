@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { useLocale } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ArrowDownLeft, ArrowUpRight, AlertTriangle, ShieldCheck, CheckCircle2 } from "lucide-react";
 import { CalendarMonthSummary } from "../../lib/types";
 import { formatCurrency, formatDate } from "../../lib/formatters";
@@ -17,6 +17,8 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
   currency = "INR",
   onOpenBufferModal,
 }) => {
+  const tBills = useTranslations("upcomingBillsList");
+  const tCal = useTranslations("calendar");
   const locale = useLocale();
 
   const formatMoney = (val: number) => {
@@ -24,7 +26,7 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
   };
 
   const formatGapDate = (dateStr?: string | null) => {
-    if (!dateStr) return "No critical gap";
+    if (!dateStr) return tBills("noCriticalGap");
     return formatDate(dateStr, locale);
   };
 
@@ -37,7 +39,7 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-[#eae8e3] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-            Expected Income (+₹)
+            {tBills("expectedIncome")}
           </span>
           <div className="w-7 h-7 rounded-lg bg-[#ecfdf5] text-[#059669] flex items-center justify-center">
             <ArrowDownLeft className="w-4 h-4" />
@@ -49,8 +51,8 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
           </span>
         </div>
         <div className="mt-2 text-[11px] text-[#6b7280] flex items-center justify-between">
-          <span>Settled: <strong className="text-[#111827]">{formatMoney(summary?.settled_inflow || 0)}</strong></span>
-          <span>Pending: <strong className="text-[#0284c7]">{formatMoney(summary?.pending_inflow || 0)}</strong></span>
+          <span>{tBills("settled")} <strong className="text-[#111827]">{formatMoney(summary?.settled_inflow || 0)}</strong></span>
+          <span>{tBills("pending")} <strong className="text-[#0284c7]">{formatMoney(summary?.pending_inflow || 0)}</strong></span>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#059669]/20" />
       </div>
@@ -59,7 +61,7 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-[#eae8e3] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-            Essential Outflows (-₹)
+            {tBills("essentialOutflows")}
           </span>
           <div className="w-7 h-7 rounded-lg bg-[#fff7ed] text-[#ea580c] flex items-center justify-center">
             <ArrowUpRight className="w-4 h-4" />
@@ -69,10 +71,10 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
           <span className="text-2xl font-black text-[#ea580c] tracking-tight">
             {formatMoney(summary?.essential_outflows || 0)}
           </span>
-          <span className="text-[11px] font-semibold text-[#6b7280]">mandated</span>
+          <span className="text-[11px] font-semibold text-[#6b7280]">{tBills("mandated")}</span>
         </div>
         <div className="mt-2 text-[11px] text-[#6b7280] flex items-center justify-between">
-          <span>Total Outflows:</span>
+          <span>{tBills("totalOutflows")}</span>
           <strong className="text-[#111827]">{formatMoney(summary?.total_outflows || 0)}</strong>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#ea580c]/20" />
@@ -86,7 +88,7 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
       }`}>
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-            Critical Gap Point
+            {tBills("criticalGap")}
           </span>
           <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${
             hasCriticalGap ? "bg-[#ffe4e6] text-[#e11d48]" : "bg-[#ecfdf5] text-[#059669]"
@@ -106,18 +108,18 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
               </span>
             </div>
             <p className="mt-2 text-[11px] text-[#9f1239] line-clamp-1 font-medium">
-              Liquidity falls below cash reserve
+              {tCal("liquidityFalls")}
             </p>
           </div>
         ) : (
           <div>
             <div className="flex items-baseline space-x-1.5">
               <span className="text-xl font-black text-[#059669] tracking-tight">
-                No Critical Gap
+                {tBills("noCriticalGap")}
               </span>
             </div>
             <p className="mt-2 text-[11px] text-[#059669] font-medium">
-              Reserves secure across all dates
+              {tCal("reservesSecure")}
             </p>
           </div>
         )}
@@ -130,7 +132,7 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
       <div className="bg-white rounded-2xl p-4 border border-[#eae8e3] shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#6b7280]">
-            Vault Buffer Reserve
+            {tCal("vaultBuffer")}
           </span>
           <div className="w-7 h-7 rounded-lg bg-[#f0fdfa] text-[#0d9488] flex items-center justify-center">
             <ShieldCheck className="w-4 h-4" />
@@ -141,11 +143,11 @@ export const CalendarSummaryCards: React.FC<CalendarSummaryCardsProps> = ({
             {formatMoney(summary?.safe_available_buffer || 0)}
           </span>
           <span className="text-[11px] font-bold text-[#059669] bg-[#ecfdf5] px-1.5 py-0.5 rounded-md">
-            Safe
+            {tCal("safe")}
           </span>
         </div>
         <div className="mt-2 text-[11px] text-[#6b7280] flex items-center justify-between">
-          <span>Protected Floor:</span>
+          <span>{tCal("protectedFloorLabel")}</span>
           <strong className="text-[#64748b]">{formatMoney(summary?.minimum_buffer_floor || 0)}</strong>
         </div>
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#0d9488]/20" />

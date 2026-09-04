@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations, useLocale } from "next-intl";
 import {
   CalendarMonthData,
   CalendarDay,
@@ -14,6 +15,7 @@ import {
   ArrowRight,
   ShieldCheck,
 } from "lucide-react";
+import { formatCurrency, formatDate as formatGlobalDate } from "../../lib/formatters";
 
 interface UpcomingBillsListViewProps {
   data: CalendarMonthData;
@@ -28,7 +30,8 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
   onSelectDay,
   selectedDay,
 }) => {
-  const currencySymbol = data.currency === "INR" ? "₹" : "$";
+  const t = useTranslations("upcomingBillsList");
+  const locale = useLocale();
 
   // Gather all bill / obligation events across the month
   const billItems: Array<{
@@ -51,19 +54,6 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
     });
   });
 
-  const formatDate = (dateStr: string) => {
-    try {
-      const d = new Date(dateStr + "T00:00:00");
-      return d.toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
   // If no bills are present in this month
   if (billItems.length === 0) {
     return (
@@ -73,10 +63,10 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
         </div>
         <div>
           <h3 className="text-lg font-black text-[#111827]">
-            No upcoming bills yet
+            {t("emptyTitle")}
           </h3>
           <p className="text-xs text-[#6b7280] max-w-md mx-auto mt-1 leading-relaxed">
-            Add your rent, vehicle EMI, phone, electricity, or loan payments. Sure-Savings will keep your money safe before due dates arrive.
+            {t("emptyDesc")}
           </p>
         </div>
         <div className="pt-2">
@@ -85,7 +75,7 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
             className="px-5 py-2.5 bg-gradient-to-r from-[#ff5b45] to-[#f05138] hover:opacity-95 text-white text-xs font-bold rounded-xl shadow-md shadow-[#ff5b45]/20 inline-flex items-center space-x-1.5 transition-all cursor-pointer"
           >
             <PlusCircle className="w-4 h-4" />
-            <span>Add a bill</span>
+            <span>{t("addBillButton")}</span>
           </button>
         </div>
       </div>
@@ -98,10 +88,10 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
       <div className="p-5 border-b border-[#f3f4f6] flex items-center justify-between">
         <div>
           <h3 className="text-sm font-black text-[#111827]">
-            Upcoming Bills ({billItems.length})
+            {t("title", { count: billItems.length })}
           </h3>
           <p className="text-xs text-[#6b7280]">
-            Scheduled living essentials and payments for {data.month_name}
+            {t("subtitle", { month: data.month_name })}
           </p>
         </div>
 
@@ -110,7 +100,7 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
           className="px-3.5 py-1.5 text-xs font-bold text-[#7c3aed] bg-[#f5f3ff] hover:bg-[#ede9fe] border border-[#ddd6fe] rounded-xl flex items-center space-x-1.5 transition-colors cursor-pointer"
         >
           <PlusCircle className="w-3.5 h-3.5" />
-          <span>Add Bill</span>
+          <span>{t("addBill")}</span>
         </button>
       </div>
 
@@ -146,7 +136,7 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
                     {event.title}
                   </h4>
                   <div className="flex items-center space-x-2 text-[11px] text-[#6b7280] mt-0.5">
-                    <span>Due {formatDate(day.date)}</span>
+                    <span>{t("due", { date: formatGlobalDate(day.date, locale) })}</span>
                     <span>•</span>
                     <span className="capitalize">{event.category.replace("_", " ")}</span>
                   </div>
@@ -157,7 +147,7 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
               <div className="flex items-center justify-between sm:justify-end space-x-4 pl-14 sm:pl-0">
                 <div className="text-right">
                   <span className="text-base font-black text-[#111827] font-mono">
-                    {currencySymbol}{Math.round(event.amount).toLocaleString("en-IN")}
+                    {formatCurrency(Math.round(event.amount), data.currency, locale)}
                   </span>
                 </div>
 
@@ -165,12 +155,12 @@ export const UpcomingBillsListView: React.FC<UpcomingBillsListViewProps> = ({
                   {isCovered ? (
                     <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0] flex items-center space-x-1.5 shadow-xs">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      <span>Covered</span>
+                      <span>{t("covered")}</span>
                     </span>
                   ) : (
                     <span className="px-3 py-1 text-xs font-bold rounded-full bg-[#fff1f2] text-[#e11d48] border border-[#fecdd3] flex items-center space-x-1.5 shadow-xs">
                       <AlertTriangle className="w-3.5 h-3.5" />
-                      <span>Needs attention</span>
+                      <span>{t("needsAttention")}</span>
                     </span>
                   )}
                 </div>
